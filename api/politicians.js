@@ -64,6 +64,7 @@ export default async function handler(req, res) {
       block2_enabled:   item.block2_enabled !== false,
       votes:            getRealVoteStats(votesList, item.id)
     }));
+    results.sort((a, b) => a.fullname.localeCompare(b.fullname, 'fr', { sensitivity: 'base' }));
 
     return res.status(200).json({ success: true, data: results });
   } catch (err) {

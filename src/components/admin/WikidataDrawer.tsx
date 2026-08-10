@@ -130,15 +130,11 @@ export default function WikidataDrawer({ politicians = [] }: WikidataDrawerProps
   return (
     <div
       style={{
-        position: 'fixed',
-        bottom: 0,
-        right: '24px',
         zIndex: 999999,
-        width: '420px',
         maxHeight: '90vh',
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)'
       }}
-      className={`rounded-t-xl border-2 border-blue-800 bg-slate-900 text-white transition-all duration-300 ${isExpanded ? 'h-[450px]' : 'h-14'}`}
+      className={`fixed bottom-0 left-0 right-0 w-full md:left-auto md:right-6 md:w-[420px] rounded-t-xl border-t-2 md:border-2 border-blue-800 bg-slate-900 text-white transition-all duration-300 ${isExpanded ? 'h-[450px]' : 'h-14'}`}
     >
       {/* Header Bar */}
       <div
