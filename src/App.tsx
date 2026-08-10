@@ -14,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import InputSelect from '@/components/ui/InputSelect';
 import { Button } from '@/components/ui/button';
-import { Search, X, UserCheck, Globe, BarChart3, RefreshCw } from 'lucide-react';
+import { Search, X, UserCheck, Globe, BarChart3, RefreshCw, ChevronDown } from 'lucide-react';
 import { Politician, Country } from '@/types';
 
 export default function App() {
@@ -24,6 +24,7 @@ export default function App() {
     }
     return 'public';
   });
+  const [adminTab, setAdminTab] = useState<string>('politicians');
   const [politicians, setPoliticians] = useState<Politician[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
@@ -231,19 +232,36 @@ export default function App() {
             </div>
 
             {/* SHADCN TABS FOR STRICT SECTION ISOLATION */}
-            <Tabs defaultValue="politicians" className="w-full space-y-6">
-              <TabsList className="flex w-full overflow-x-auto no-scrollbar justify-start border-b border-slate-200 bg-white px-0 sm:px-2 py-0">
-                <TabsTrigger value="politicians" className="flex items-center gap-2 shrink-0">
+            <Tabs value={adminTab} onValueChange={setAdminTab} className="w-full space-y-6">
+              {/* Mobile Select Dropdown (No scroll, clean dropdown) */}
+              <div className="sm:hidden">
+                <div className="relative">
+                  <select
+                    value={adminTab}
+                    onChange={(e) => setAdminTab(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="politicians">👤 Gestion des Politiciens</option>
+                    <option value="countries">🌐 Gestion des Pays</option>
+                    <option value="surveys">📊 Sondages & Baromètre</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                </div>
+              </div>
+
+              {/* Desktop TabsBar */}
+              <TabsList className="hidden sm:flex w-full justify-start border-b border-slate-200 bg-white px-2 py-0">
+                <TabsTrigger value="politicians" className="flex items-center gap-2">
                   <UserCheck className="h-4 w-4" />
-                  <span className="hidden sm:inline">Gestion des </span>Politiciens
+                  Gestion des Politiciens
                 </TabsTrigger>
-                <TabsTrigger value="countries" className="flex items-center gap-2 shrink-0">
+                <TabsTrigger value="countries" className="flex items-center gap-2">
                   <Globe className="h-4 w-4" />
-                  <span className="hidden sm:inline">Gestion des </span>Pays
+                  Gestion des Pays
                 </TabsTrigger>
-                <TabsTrigger value="surveys" className="flex items-center gap-2 shrink-0">
+                <TabsTrigger value="surveys" className="flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
-                  Sondages<span className="hidden sm:inline"> & Baromètre</span>
+                  Sondages & Baromètre
                 </TabsTrigger>
               </TabsList>
 
