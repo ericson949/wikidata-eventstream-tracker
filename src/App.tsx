@@ -232,18 +232,18 @@ export default function App() {
 
             {/* SHADCN TABS FOR STRICT SECTION ISOLATION */}
             <Tabs defaultValue="politicians" className="w-full space-y-6">
-              <TabsList className="border-b border-slate-200 bg-white px-2 py-0">
-                <TabsTrigger value="politicians" className="flex items-center gap-2">
+              <TabsList className="flex w-full overflow-x-auto no-scrollbar justify-start border-b border-slate-200 bg-white px-0 sm:px-2 py-0">
+                <TabsTrigger value="politicians" className="flex items-center gap-2 shrink-0">
                   <UserCheck className="h-4 w-4" />
-                  Gestion des Politiciens
+                  <span className="hidden sm:inline">Gestion des </span>Politiciens
                 </TabsTrigger>
-                <TabsTrigger value="countries" className="flex items-center gap-2">
+                <TabsTrigger value="countries" className="flex items-center gap-2 shrink-0">
                   <Globe className="h-4 w-4" />
-                  Gestion des Pays
+                  <span className="hidden sm:inline">Gestion des </span>Pays
                 </TabsTrigger>
-                <TabsTrigger value="surveys" className="flex items-center gap-2">
+                <TabsTrigger value="surveys" className="flex items-center gap-2 shrink-0">
                   <BarChart3 className="h-4 w-4" />
-                  Sondages & Baromètre
+                  Sondages<span className="hidden sm:inline"> & Baromètre</span>
                 </TabsTrigger>
               </TabsList>
 

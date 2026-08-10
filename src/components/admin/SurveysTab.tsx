@@ -283,14 +283,14 @@ export default function SurveysTab({ politicians }: SurveysTabProps) {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="stats" className="w-full space-y-5">
-        <TabsList className="border border-slate-200 bg-slate-50 p-1 rounded-lg h-auto">
-          <TabsTrigger value="stats" className="flex items-center gap-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <BarChart3 className="h-4 w-4" />
-            Statistiques croisées
+        <TabsList className="flex w-full border border-slate-200 bg-slate-50 p-1 rounded-lg h-auto">
+          <TabsTrigger value="stats" className="flex-1 flex items-center justify-center gap-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <BarChart3 className="h-4 w-4 shrink-0" />
+            <span className="truncate">Statistiques<span className="hidden sm:inline"> croisées</span></span>
           </TabsTrigger>
-          <TabsTrigger value="questions" className="flex items-center gap-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <HelpCircle className="h-4 w-4" />
-            Gestion des questions
+          <TabsTrigger value="questions" className="flex-1 flex items-center justify-center gap-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <HelpCircle className="h-4 w-4 shrink-0" />
+            <span className="truncate"><span className="hidden sm:inline">Gestion des </span>Questions</span>
           </TabsTrigger>
         </TabsList>
 
