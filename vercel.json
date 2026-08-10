@@ -1,68 +1,20 @@
 {
-  "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
+      "source": "/api/admin/politicians/:id/vote-settings",
+      "destination": "/api/tracked?id=:id"
     },
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/admin/login",
-      "dest": "/api/admin/login.js"
+      "source": "/api/tracked/:id",
+      "destination": "/api/tracked?id=:id"
     },
     {
-      "src": "/api/admin/check",
-      "dest": "/api/admin/check.js"
+      "source": "/api/questions/:id",
+      "destination": "/api/questions?id=:id"
     },
     {
-      "src": "/api/countries",
-      "dest": "/api/countries.js"
-    },
-    {
-      "src": "/api/admin/politicians/(.*)/vote-settings",
-      "dest": "/api/tracked.js?id=$1"
-    },
-    {
-      "src": "/api/tracked/(.*)",
-      "dest": "/api/tracked.js?id=$1"
-    },
-    {
-      "src": "/api/tracked",
-      "dest": "/api/tracked.js"
-    },
-    {
-      "src": "/api/politicians",
-      "dest": "/api/politicians.js"
-    },
-    {
-      "src": "/api/questions/(.*)",
-      "dest": "/api/questions.js?id=$1"
-    },
-    {
-      "src": "/api/questions",
-      "dest": "/api/questions.js"
-    },
-    {
-      "src": "/api/votes",
-      "dest": "/api/votes.js"
-    },
-    {
-      "src": "/api/search",
-      "dest": "/api/search.js"
-    },
-    {
-      "src": "/api/vote",
-      "dest": "/api/vote.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/((?!api/|assets/|.*\\..*).*)",
+      "destination": "/index.html"
     }
   ]
 }

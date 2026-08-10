@@ -1,61 +1,69 @@
-import fs from 'fs';
-import path from 'path';
+import { dbRead, dbWrite } from './_db.js';
 
-const COUNTRIES_FILE = path.join(process.cwd(), 'data', 'countries.json');
+const KEY = 'countries';
+const FILE = 'countries.json';
 
-function readCountries() {
-  try {
-    const raw = fs.readFileSync(COUNTRIES_FILE, 'utf-8');
-    return JSON.parse(raw);
-  } catch (e) {
-    return [];
-  }
+async function readCountries() {
+  return (await dbRead(KEY, FILE)) || [];
 }
 
-function saveCountries(list) {
-  try {
-    fs.writeFileSync(COUNTRIES_FILE, JSON.stringify(list, null, 2), 'utf-8');
-    return true;
-  } catch (e) {
-    return false;
-  }
+async function saveCountries(countries) {
+  return await dbWrite(KEY, countries, FILE);
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-token');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  let countries = readCountries();
+  const idParam = req.query.id || null;
 
   if (req.method === 'GET') {
-    return res.status(200).json({ success: true, data: countries });
+    const list = await readCountries();
+    return res.status(200).json({ success: true, data: list });
   }
 
   if (req.method === 'POST') {
     const { id, name, flag, region } = req.body || {};
-    const cleanId = (id || '').toUpperCase().trim();
-
-    if (!cleanId || !name) {
-      return res.status(400).json({ success: false, message: 'Identifiant Q-ID et nom de pays requis.' });
+    if (!id || !name) {
+      return res.status(400).json({ success: false, message: 'ID et Nom de pays requis.' });
     }
 
+    const cleanId = id.toUpperCase().trim();
+    let countries = await readCountries();
+
     if (countries.some(c => c.id.toUpperCase() === cleanId)) {
-      return res.status(400).json({ success: false, message: `Le pays ${name} (${cleanId}) existe déjà.` });
+      return res.status(400).json({ success: false, message: `Le pays ${cleanId} existe déjà.` });
     }
 
     const newCountry = {
       id: cleanId,
-      name,
-      flag: flag || '🌍',
+      name: name.trim(),
+      flag: flag || null,
       region: region || 'Afrique'
     };
 
     countries.push(newCountry);
-    saveCountries(countries);
-    return res.status(200).json({ success: true, country: newCountry, message: `Pays ${name} ajouté avec succès.` });
+    await saveCountries(countries);
+
+    return res.status(201).json({ success: true, data: newCountry, message: 'Pays ajouté.' });
+  }
+
+  if (req.method === 'DELETE') {
+    const cleanId = (idParam || req.body?.id || '').toUpperCase().trim();
+    if (!cleanId) return res.status(400).json({ success: false, message: 'ID de pays manquant.' });
+
+    let countries = await readCountries();
+    const initialLen = countries.length;
+    countries = countries.filter(c => c.id.toUpperCase() !== cleanId);
+
+    if (countries.length < initialLen) {
+      await saveCountries(countries);
+      return res.status(200).json({ success: true, message: `Pays ${cleanId} supprimé.` });
+    }
+    return res.status(404).json({ success: false, message: `Pays ${cleanId} non trouvé.` });
   }
 
   return res.status(405).json({ success: false, message: 'Méthode non autorisée.' });

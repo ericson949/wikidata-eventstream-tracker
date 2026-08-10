@@ -1,25 +1,15 @@
-import fs from 'fs';
-import path from 'path';
 import crypto from 'crypto';
+import { dbRead, dbWrite } from './_db.js';
 
-const QUESTIONS_FILE = path.join(process.cwd(), 'data', 'questions.json');
+const KEY = 'questions';
+const FILE = 'questions.json';
 
-function readQuestions() {
-  try {
-    const raw = fs.readFileSync(QUESTIONS_FILE, 'utf-8');
-    return JSON.parse(raw);
-  } catch (e) {
-    return [];
-  }
+async function readQuestions() {
+  return (await dbRead(KEY, FILE)) || [];
 }
 
-function saveQuestions(questions) {
-  try {
-    fs.writeFileSync(QUESTIONS_FILE, JSON.stringify(questions, null, 2), 'utf-8');
-    return true;
-  } catch (e) {
-    return false;
-  }
+async function saveQuestions(questions) {
+  return await dbWrite(KEY, questions, FILE);
 }
 
 function isQuestionCurrentlyActive(q) {
@@ -30,23 +20,21 @@ function isQuestionCurrentlyActive(q) {
   return true;
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-token');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // Extract ID from URL path or query
   const idParam = req.query.id || null;
 
   // ─── GET /api/questions ────────────────────────────────────────────────────
   if (req.method === 'GET') {
-    const questions = readQuestions();
+    const questions = await readQuestions();
     const { active_only } = req.query;
 
     let filtered = questions;
-
     if (active_only === 'true') {
       filtered = filtered.filter(isQuestionCurrentlyActive);
     }
@@ -54,7 +42,7 @@ export default function handler(req, res) {
     return res.status(200).json({ success: true, data: filtered });
   }
 
-  // ─── POST /api/questions → créer une question ─────────────────────────────
+  // ─── POST /api/questions ───────────────────────────────────────────────────
   if (req.method === 'POST') {
     const { text, active, start_date, end_date, set_active } = req.body || {};
 
@@ -62,9 +50,7 @@ export default function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Le texte de la question est requis.' });
     }
 
-    let questions = readQuestions();
-
-    // If this new question should be the active one, deactivate all others
+    let questions = await readQuestions();
     const makeActive = active !== false && set_active !== false;
     if (makeActive) {
       questions = questions.map(q => ({ ...q, active: false }));
@@ -80,19 +66,19 @@ export default function handler(req, res) {
     };
 
     questions.push(newQuestion);
-    saveQuestions(questions);
+    await saveQuestions(questions);
 
     return res.status(201).json({ success: true, data: newQuestion, message: 'Question créée avec succès.' });
   }
 
-  // ─── PUT /api/questions/:id → modifier / activer une question ─────────────
+  // ─── PUT /api/questions/:id ────────────────────────────────────────────────
   if (req.method === 'PUT') {
     const cleanId = idParam;
     if (!cleanId) {
       return res.status(400).json({ success: false, message: 'ID de question manquant.' });
     }
 
-    let questions = readQuestions();
+    let questions = await readQuestions();
     const idx = questions.findIndex(q => q.id === cleanId);
 
     if (idx === -1) {
@@ -101,7 +87,6 @@ export default function handler(req, res) {
 
     const { text, active, start_date, end_date } = req.body || {};
 
-    // If activating this question, deactivate all others first
     if (active === true) {
       questions = questions.map((q, i) => i === idx ? q : { ...q, active: false });
     }
@@ -112,23 +97,23 @@ export default function handler(req, res) {
     if (end_date !== undefined) questions[idx].end_date = end_date || null;
     questions[idx].updated_at = new Date().toISOString();
 
-    saveQuestions(questions);
+    await saveQuestions(questions);
     return res.status(200).json({ success: true, data: questions[idx], message: 'Question mise à jour.' });
   }
 
-  // ─── DELETE /api/questions/:id → supprimer une question ───────────────────
+  // ─── DELETE /api/questions/:id ──────────────────────────────────────────────
   if (req.method === 'DELETE') {
     const cleanId = idParam;
     if (!cleanId) {
       return res.status(400).json({ success: false, message: 'ID de question manquant.' });
     }
 
-    let questions = readQuestions();
+    let questions = await readQuestions();
     const initial = questions.length;
     questions = questions.filter(q => q.id !== cleanId);
 
     if (questions.length < initial) {
-      saveQuestions(questions);
+      await saveQuestions(questions);
       return res.status(200).json({ success: true, message: 'Question supprimée.' });
     }
 
