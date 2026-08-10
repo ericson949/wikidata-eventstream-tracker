@@ -162,30 +162,30 @@ export default function PoliticiansTab({
       </div>
 
       {/* Filter & Search Toolbar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 py-1 shadow-sm focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="relative flex flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 py-1 shadow-sm focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 w-full md:w-auto">
           <Search className="h-4 w-4 shrink-0 text-slate-400" />
           <input
             type="text"
             placeholder="Rechercher par nom, Q-ID, fonction, pays..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-transparent px-3 py-1.5 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+            className="w-full bg-transparent px-3 py-1.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 min-w-0"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="mr-2 text-slate-400 hover:text-red-600 focus:outline-none"
+              className="mr-2 text-slate-400 hover:text-red-600 focus:outline-none shrink-0"
             >
               <X className="h-4 w-4" />
             </button>
           )}
-          <Button size="sm" className="bg-blue-900 text-white hover:bg-blue-800">
+          <Button size="sm" className="bg-blue-900 text-white hover:bg-blue-800 shrink-0">
             Rechercher
           </Button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
           <InputSelect
             value={selectedCountry}
             onValueChange={setSelectedCountry}
@@ -195,7 +195,7 @@ export default function PoliticiansTab({
               icon: c.flag
             }))}
             placeholder="Tous les pays"
-            className="w-48"
+            className="w-full sm:w-48"
           />
 
           <InputSelect
@@ -206,10 +206,10 @@ export default function PoliticiansTab({
               { value: 'Désactivé', label: 'Désactivé (Masqué)' }
             ]}
             placeholder="Tous les statuts"
-            className="w-44"
+            className="w-full sm:w-44"
           />
 
-          <Button variant="ghost" size="sm" onClick={onRefreshData} title="Actualiser la liste">
+          <Button variant="ghost" size="sm" onClick={onRefreshData} title="Actualiser la liste" className="sm:w-auto self-end sm:self-auto hidden sm:flex">
             <RefreshCw className="h-4 w-4 text-slate-500" />
           </Button>
         </div>

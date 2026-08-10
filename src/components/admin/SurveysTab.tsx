@@ -106,21 +106,21 @@ function CrossedStats({ politicians }: { politicians: Politician[] }) {
               { value: 'month', label: 'Ce mois' },
             ]}
             placeholder="Période"
-            className="w-44"
+            className="w-full sm:w-44"
           />
           <InputSelect
             value={filterPolitician}
             onValueChange={setFilterPolitician}
             options={politicians.map(p => ({ value: p.id, label: p.fullname }))}
             placeholder="Tous les politiciens"
-            className="w-52"
+            className="w-full sm:w-52"
           />
           <InputSelect
             value={filterQuestion}
             onValueChange={setFilterQuestion}
             options={questions.map(q => ({ value: q.id, label: q.text.substring(0, 50) + (q.text.length > 50 ? '...' : '') }))}
             placeholder="Toutes les questions"
-            className="w-64"
+            className="w-full sm:w-64"
           />
           <InputSelect
             value={filterAge}
@@ -134,7 +134,7 @@ function CrossedStats({ politicians }: { politicians: Politician[] }) {
               { value: '65+', label: '65+ ans' },
             ]}
             placeholder="Tous les âges"
-            className="w-36"
+            className="w-full sm:w-36"
           />
           <InputSelect
             value={filterGender}
@@ -145,7 +145,7 @@ function CrossedStats({ politicians }: { politicians: Politician[] }) {
               { value: 'NB', label: 'Autre / NB' },
             ]}
             placeholder="Tous les genres"
-            className="w-36"
+            className="w-full sm:w-36"
           />
           <Button variant="ghost" size="sm" onClick={loadStats} title="Actualiser" className="gap-1.5">
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />

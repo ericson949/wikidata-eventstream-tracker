@@ -251,14 +251,14 @@ export default function QuestionsManager(_props: QuestionsManagerProps) {
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h3 className="font-bold text-slate-900">Toutes les questions</h3>
           <p className="text-xs text-slate-500 mt-0.5">
             {questions.length} question{questions.length > 1 ? 's' : ''} — une seule peut être active à la fois
           </p>
         </div>
-        <Button onClick={openCreate} className="bg-blue-900 text-white hover:bg-blue-800 gap-2">
+        <Button onClick={openCreate} className="bg-blue-900 text-white hover:bg-blue-800 gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
           Nouvelle question
         </Button>

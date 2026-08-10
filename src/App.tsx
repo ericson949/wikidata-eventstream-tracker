@@ -146,27 +146,27 @@ export default function App() {
             </div>
 
             {/* Filter Toolbar with Clear Cross Buttons */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="relative flex flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 py-1 shadow-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="relative flex flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 py-1 shadow-sm w-full md:w-auto">
                 <Search className="h-4 w-4 shrink-0 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Rechercher une personnalité, une fonction, un pays..."
                   value={publicSearch}
                   onChange={(e) => setPublicSearch(e.target.value)}
-                  className="w-full bg-transparent px-3 py-1.5 text-sm outline-none placeholder:text-slate-400"
+                  className="w-full bg-transparent px-3 py-1.5 text-sm outline-none placeholder:text-slate-400 min-w-0"
                 />
                 {publicSearch && (
-                  <button onClick={() => setPublicSearch('')} className="mr-2 text-slate-400 hover:text-red-600">
+                  <button onClick={() => setPublicSearch('')} className="mr-2 text-slate-400 hover:text-red-600 shrink-0">
                     <X className="h-4 w-4" />
                   </button>
                 )}
-                <Button size="sm" className="bg-blue-900 text-white hover:bg-blue-800">
+                <Button size="sm" className="bg-blue-900 text-white hover:bg-blue-800 shrink-0">
                   Rechercher
                 </Button>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                 <InputSelect
                   value={publicCountry}
                   onValueChange={setPublicCountry}
@@ -176,7 +176,7 @@ export default function App() {
                     icon: c.flag
                   }))}
                   placeholder="Tous les pays"
-                  className="w-48"
+                  className="w-full sm:w-48"
                 />
 
                 <InputSelect
@@ -188,7 +188,7 @@ export default function App() {
                     { value: 'Décédé', label: 'Décédé' }
                   ]}
                   placeholder="Tous les statuts"
-                  className="w-44"
+                  className="w-full sm:w-44"
                 />
               </div>
             </div>

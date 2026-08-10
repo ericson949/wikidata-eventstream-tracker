@@ -30,15 +30,15 @@ export default function AdminNavbar({
 
 
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={onOpenSettings}>
-            <Settings className="mr-2 h-4 w-4 text-slate-500" />
-            Config Webhook
+          <Button variant="outline" size="sm" onClick={onOpenSettings} className="px-2 sm:px-3">
+            <Settings className="h-4 w-4 text-slate-500 sm:mr-2" />
+            <span className="hidden sm:inline">Config Webhook</span>
           </Button>
-          <Button variant="default" size="sm" onClick={onOpenAddModal} className="bg-blue-900 hover:bg-blue-800">
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter (Wikidata)
+          <Button variant="default" size="sm" onClick={onOpenAddModal} className="bg-blue-900 hover:bg-blue-800 px-2 sm:px-3">
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Ajouter (Wikidata)</span>
           </Button>
-          <Button variant="ghost" size="sm" onClick={onLogout} className="text-red-600 hover:bg-red-50 hover:text-red-700">
+          <Button variant="ghost" size="sm" onClick={onLogout} className="text-red-600 hover:bg-red-50 hover:text-red-700 px-2">
             <LogOut className="h-4 w-4" />
           </Button>
         </div>

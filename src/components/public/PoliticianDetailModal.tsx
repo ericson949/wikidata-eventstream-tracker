@@ -309,20 +309,20 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/50 to-transparent" />
-            <div className="absolute bottom-5 left-6 right-16 flex items-end gap-4">
+            <div className="absolute bottom-4 sm:bottom-5 left-4 right-4 sm:left-6 sm:right-6 flex items-end gap-3 sm:gap-4">
               {politician.photo_url ? (
                 <img
                   src={politician.photo_url}
                   alt={politician.fullname}
-                  className="h-20 w-20 rounded-xl object-cover object-top border-2 border-white/20 shadow-lg shrink-0"
+                  className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl object-cover object-top border-2 border-white/20 shadow-lg shrink-0"
                 />
               ) : (
-                <div className="h-20 w-20 rounded-xl bg-white/10 border-2 border-white/20 flex items-center justify-center font-serif text-3xl font-bold text-white shrink-0">
+                <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl bg-white/10 border-2 border-white/20 flex items-center justify-center font-serif text-2xl sm:text-3xl font-bold text-white shrink-0">
                   {politician.fullname.charAt(0)}
                 </div>
               )}
-              <div className="text-white">
-                <h2 className="font-serif text-2xl font-bold leading-tight">{politician.fullname}</h2>
+              <div className="text-white min-w-0">
+                <h2 className="font-serif text-xl sm:text-2xl font-bold leading-tight truncate">{politician.fullname}</h2>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                   {politician.country?.name && (
                     <span className="flex items-center gap-1 text-xs text-blue-200">

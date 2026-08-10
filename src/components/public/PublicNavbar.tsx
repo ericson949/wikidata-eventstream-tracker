@@ -20,9 +20,9 @@ export default function PublicNavbar({ onOpenAdmin }: PublicNavbarProps) {
           </div>
         </div>
 
-        <Button variant="outline" size="sm" onClick={onOpenAdmin} className="border-slate-300 text-slate-700 hover:bg-slate-100">
-          <Lock className="mr-2 h-4 w-4 text-slate-500" />
-          Espace Admin
+        <Button variant="outline" size="sm" onClick={onOpenAdmin} className="border-slate-300 text-slate-700 hover:bg-slate-100 px-2 sm:px-3">
+          <Lock className="h-4 w-4 text-slate-500 sm:mr-2" />
+          <span className="hidden sm:inline">Espace Admin</span>
         </Button>
       </div>
     </header>
