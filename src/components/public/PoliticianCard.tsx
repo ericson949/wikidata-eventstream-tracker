@@ -26,7 +26,7 @@ export default function PoliticianCard({ politician, onSelect }: PoliticianCardP
           <img
             src={politician.photo_url}
             alt={politician.fullname}
-            className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover object-[center_65%] transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-slate-200 font-serif text-5xl font-bold text-slate-400">
