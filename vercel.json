@@ -1,0 +1,64 @@
+{
+  "version": 2,
+  "public": true,
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**/*",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/admin/login",
+      "dest": "/api/admin/login.js"
+    },
+    {
+      "src": "/api/admin/check",
+      "dest": "/api/admin/check.js"
+    },
+    {
+      "src": "/api/countries",
+      "dest": "/api/countries.js"
+    },
+    {
+      "src": "/api/admin/politicians/(.*)/status",
+      "dest": "/api/tracked.js?id=$1"
+    },
+    {
+      "src": "/api/tracked/(.*)",
+      "dest": "/api/tracked.js?id=$1"
+    },
+    {
+      "src": "/api/tracked",
+      "dest": "/api/tracked.js"
+    },
+    {
+      "src": "/api/politicians",
+      "dest": "/api/politicians.js"
+    },
+    {
+      "src": "/api/search",
+      "dest": "/api/search.js"
+    },
+    {
+      "src": "/api/vote",
+      "dest": "/api/vote.js"
+    },
+    {
+      "src": "/admin.html",
+      "dest": "/public/admin.html"
+    },
+    {
+      "src": "/admin",
+      "dest": "/public/admin.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
+  ]
+}

@@ -1,0 +1,205 @@
+{
+  "Q57272": {
+    "cachedAt": 1786374321159,
+    "data": {
+      "id": "Q57272",
+      "fullname": "Paul Biya",
+      "first_name": "Paul",
+      "last_name": "Biya",
+      "job_title": "homme d'État camerounais",
+      "biography": "homme d'État camerounais",
+      "birth_date": "1933-02-13",
+      "death_date": null,
+      "actor_state": "En exercice",
+      "country": {
+        "id": "Q1009",
+        "name": "🇨🇲 Cameroun"
+      },
+      "political_party": {
+        "id": "Q953447",
+        "name": "Parti officiel"
+      },
+      "position_held": {
+        "id": "Q19158914",
+        "name": "homme d'État camerounais"
+      },
+      "photo_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Paul%20Biya%20in%20December%2014th%2C%202022.jpg",
+      "source_url": "https://www.wikidata.org/wiki/Q57272",
+      "wikidata_url": "https://www.wikidata.org/wiki/Q57272"
+    }
+  },
+  "Q122067521": {
+    "cachedAt": 1786374321405,
+    "data": {
+      "id": "Q122067521",
+      "fullname": "Brice Oligui Nguema",
+      "first_name": "Brice",
+      "last_name": "Oligui Nguema",
+      "job_title": "général gabonais, chef d'État du Gabon",
+      "biography": "général gabonais, chef d'État du Gabon",
+      "birth_date": "1975-03-03",
+      "death_date": null,
+      "actor_state": "En exercice",
+      "country": {
+        "id": "Q1000",
+        "name": "🇬🇦 Gabon"
+      },
+      "political_party": {
+        "id": "Q134311805",
+        "name": "Parti officiel"
+      },
+      "position_held": {
+        "id": "Q19109718",
+        "name": "général gabonais, chef d'État du Gabon"
+      },
+      "photo_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Brice%20Oligui%20Nguema%20on%20November%2026%2C%202024%20(cropped).jpg",
+      "source_url": "https://www.wikidata.org/wiki/Q122067521",
+      "wikidata_url": "https://www.wikidata.org/wiki/Q122067521"
+    }
+  },
+  "Q16206405": {
+    "cachedAt": 1786374321444,
+    "data": {
+      "id": "Q16206405",
+      "fullname": "Mahamat Idriss Déby",
+      "first_name": "Mahamat",
+      "last_name": "Idriss Déby",
+      "job_title": "militaire et homme d'État tchadien",
+      "biography": "militaire et homme d'État tchadien",
+      "birth_date": "1984-04-04",
+      "death_date": null,
+      "actor_state": "En exercice",
+      "country": {
+        "id": "Q657",
+        "name": "🇹🇩 Tchad"
+      },
+      "political_party": {
+        "id": "Q327591",
+        "name": "Parti officiel"
+      },
+      "position_held": {
+        "id": "Q28003132",
+        "name": "militaire et homme d'État tchadien"
+      },
+      "photo_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Mahamat%20D%C3%A9by.jpg",
+      "source_url": "https://www.wikidata.org/wiki/Q16206405",
+      "wikidata_url": "https://www.wikidata.org/wiki/Q16206405"
+    }
+  },
+  "Q57758": {
+    "cachedAt": 1786374321538,
+    "data": {
+      "id": "Q57758",
+      "fullname": "Faustin-Archange Touadéra",
+      "first_name": "Faustin-Archange",
+      "last_name": "Touadéra",
+      "job_title": "homme d’État centrafricain",
+      "biography": "homme d’État centrafricain",
+      "birth_date": "1957-04-21",
+      "death_date": null,
+      "actor_state": "En exercice",
+      "country": {
+        "id": "Q929",
+        "name": "🇨🇫 République Centrafricaine"
+      },
+      "political_party": {
+        "id": "Q1968085",
+        "name": "Parti officiel"
+      },
+      "position_held": {
+        "id": "Q16773091",
+        "name": "homme d’État centrafricain"
+      },
+      "photo_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Visit%20of%20Faustin-Archange%20Touad%C3%A9ra%2C%20President%20of%20the%20Central%20African%20Republic%2C%20to%20the%20European%20Commission%20(P067074-430913%2C%20cropped).jpg",
+      "source_url": "https://www.wikidata.org/wiki/Q57758",
+      "wikidata_url": "https://www.wikidata.org/wiki/Q57758"
+    }
+  },
+  "Q57438": {
+    "cachedAt": 1786374321646,
+    "data": {
+      "id": "Q57438",
+      "fullname": "Macky Sall",
+      "first_name": "Macky",
+      "last_name": "Sall",
+      "job_title": "homme d'État sénégalais",
+      "biography": "homme d'État sénégalais",
+      "birth_date": "1961-12-11",
+      "death_date": null,
+      "actor_state": "En exercice",
+      "country": {
+        "id": "Q1041",
+        "name": "🇸🇳 Sénégal"
+      },
+      "political_party": {
+        "id": "Q1351653",
+        "name": "Parti officiel"
+      },
+      "position_held": {
+        "id": "Q19116034",
+        "name": "homme d'État sénégalais"
+      },
+      "photo_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Macky%20Sall%20with%20Obamas%202014%20(cropped).jpg",
+      "source_url": "https://www.wikidata.org/wiki/Q57438",
+      "wikidata_url": "https://www.wikidata.org/wiki/Q57438"
+    }
+  },
+  "Q98497406": {
+    "cachedAt": 1786374321708,
+    "data": {
+      "id": "Q98497406",
+      "fullname": "Assimi Goïta",
+      "first_name": "Assimi",
+      "last_name": "Goïta",
+      "job_title": "militaire et homme d'État malien",
+      "biography": "militaire et homme d'État malien",
+      "birth_date": "1983-11-09",
+      "death_date": null,
+      "actor_state": "En exercice",
+      "country": {
+        "id": "Q912",
+        "name": "🇲🇱 Mali"
+      },
+      "political_party": {
+        "id": null,
+        "name": "Indépendant"
+      },
+      "position_held": {
+        "id": "Q113669206",
+        "name": "militaire et homme d'État malien"
+      },
+      "photo_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Assimi%20Go%C3%AFta%20in%20July%202023.jpg",
+      "source_url": "https://www.wikidata.org/wiki/Q98497406",
+      "wikidata_url": "https://www.wikidata.org/wiki/Q98497406"
+    }
+  },
+  "Q29032770": {
+    "cachedAt": 1786374321733,
+    "data": {
+      "id": "Q29032770",
+      "fullname": "Félix Tshisekedi",
+      "first_name": "Félix",
+      "last_name": "Tshisekedi",
+      "job_title": "homme d'État congolais",
+      "biography": "homme d'État congolais",
+      "birth_date": "1963-06-13",
+      "death_date": null,
+      "actor_state": "En exercice",
+      "country": {
+        "id": "Q974",
+        "name": "🇨🇩 RD Congo"
+      },
+      "political_party": {
+        "id": "Q1629663",
+        "name": "Parti officiel"
+      },
+      "position_held": {
+        "id": "Q21295979",
+        "name": "homme d'État congolais"
+      },
+      "photo_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Felix%20Tshisekedi%2C%20President%20of%20the%20Democratic%20Republic%20of%20the%20Congo%20(55078564106)%20(cropped).jpg",
+      "source_url": "https://www.wikidata.org/wiki/Q29032770",
+      "wikidata_url": "https://www.wikidata.org/wiki/Q29032770"
+    }
+  }
+}

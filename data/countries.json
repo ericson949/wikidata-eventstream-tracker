@@ -1,0 +1,72 @@
+[
+  {
+    "id": "Q1041",
+    "name": "Sénégal",
+    "flag": "🇸🇳",
+    "code": "SN",
+    "region": "Afrique de l'Ouest"
+  },
+  {
+    "id": "Q962",
+    "name": "Bénin",
+    "flag": "🇧🇯",
+    "code": "BJ",
+    "region": "Afrique de l'Ouest"
+  },
+  {
+    "id": "Q1008",
+    "name": "Côte d'Ivoire",
+    "flag": "🇨🇮",
+    "code": "CI",
+    "region": "Afrique de l'Ouest"
+  },
+  {
+    "id": "Q1033",
+    "name": "Nigeria",
+    "flag": "🇳🇬",
+    "code": "NG",
+    "region": "Afrique de l'Ouest"
+  },
+  {
+    "id": "Q912",
+    "name": "Mali",
+    "flag": "🇲🇱",
+    "code": "ML",
+    "region": "Afrique de l'Ouest"
+  },
+  {
+    "id": "Q1009",
+    "name": "Cameroun",
+    "flag": "🇨🇲",
+    "code": "CM",
+    "region": "Afrique Centrale"
+  },
+  {
+    "id": "Q1000",
+    "name": "Gabon",
+    "flag": "🇬🇦",
+    "code": "GA",
+    "region": "Afrique Centrale"
+  },
+  {
+    "id": "Q974",
+    "name": "RD Congo",
+    "flag": "🇨🇩",
+    "code": "CD",
+    "region": "Afrique Centrale"
+  },
+  {
+    "id": "Q657",
+    "name": "Tchad",
+    "flag": "🇹🇩",
+    "code": "TD",
+    "region": "Afrique Centrale"
+  },
+  {
+    "id": "Q929",
+    "name": "République Centrafricaine",
+    "flag": "🇨🇫",
+    "code": "CF",
+    "region": "Afrique Centrale"
+  }
+]
