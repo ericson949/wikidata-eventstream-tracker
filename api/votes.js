@@ -182,7 +182,14 @@ export default function handler(req, res) {
     };
 
     votes.push(newVote);
-    saveVotes(votes);
+    const saved = saveVotes(votes);
+
+    if (!saved) {
+      return res.status(500).json({
+        success: false,
+        message: "Erreur d'écriture : système de fichiers en lecture seule (Vercel Serverless). Connectez une BDD (Upstash Redis, Supabase, Neon) pour persister les votes en production."
+      });
+    }
 
     // Return updated stats for this politician
     const updatedStats = aggregateStats(votes, politician_id);

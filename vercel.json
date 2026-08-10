@@ -1,14 +1,14 @@
 {
   "version": 2,
-  "public": true,
   "builds": [
     {
       "src": "api/**/*.js",
       "use": "@vercel/node"
     },
     {
-      "src": "public/**/*",
-      "use": "@vercel/static"
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
     }
   ],
   "routes": [
@@ -25,7 +25,7 @@
       "dest": "/api/countries.js"
     },
     {
-      "src": "/api/admin/politicians/(.*)/status",
+      "src": "/api/admin/politicians/(.*)/vote-settings",
       "dest": "/api/tracked.js?id=$1"
     },
     {
@@ -41,6 +41,18 @@
       "dest": "/api/politicians.js"
     },
     {
+      "src": "/api/questions/(.*)",
+      "dest": "/api/questions.js?id=$1"
+    },
+    {
+      "src": "/api/questions",
+      "dest": "/api/questions.js"
+    },
+    {
+      "src": "/api/votes",
+      "dest": "/api/votes.js"
+    },
+    {
       "src": "/api/search",
       "dest": "/api/search.js"
     },
@@ -49,16 +61,8 @@
       "dest": "/api/vote.js"
     },
     {
-      "src": "/admin.html",
-      "dest": "/public/admin.html"
-    },
-    {
-      "src": "/admin",
-      "dest": "/public/admin.html"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/public/$1"
+      "dest": "/index.html"
     }
   ]
 }
