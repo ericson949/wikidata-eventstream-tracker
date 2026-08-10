@@ -307,7 +307,7 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
               <img
                 src={politician.photo_url}
                 alt={politician.fullname}
-                className="absolute inset-0 h-full w-full object-cover object-top opacity-30"
+                className="absolute inset-0 h-full w-full object-cover object-center opacity-30"
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/50 to-transparent" />
@@ -316,7 +316,7 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
                 <img
                   src={politician.photo_url}
                   alt={politician.fullname}
-                  className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl object-cover object-top border-2 border-white/20 shadow-lg shrink-0"
+                  className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl object-cover object-center border-2 border-white/20 shadow-lg shrink-0"
                 />
               ) : (
                 <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl bg-white/10 border-2 border-white/20 flex items-center justify-center font-serif text-2xl sm:text-3xl font-bold text-white shrink-0">
