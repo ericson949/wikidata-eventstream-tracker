@@ -179,18 +179,20 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
   }, [politician]);
 
   useEffect(() => {
-    if (!politician) return;
+    if (!politician) {
+      setQuestion(null);
+      setVoteData(null);
+      return;
+    }
     loadData();
     setHasVotedOpinion(hasVotedLocally(politician.id, 'opinion'));
     setOpinionFeedback(null);
     setQuestionFeedback(null);
-    setVoteData(null);
-    setQuestion(null);
   }, [politician, loadData]);
 
   useEffect(() => {
-    if (question) {
-      setHasVotedQuestion(hasVotedLocally(politician!.id, 'question', question.id));
+    if (question && politician) {
+      setHasVotedQuestion(hasVotedLocally(politician.id, 'question', question.id));
     }
   }, [question, politician]);
 
