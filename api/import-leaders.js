@@ -65,6 +65,7 @@ export default async function handler(req, res) {
     defaultStatus = 'Désactivé',
     types         = ['president'],
     dryRun        = false,
+    batchSize     = 20,  // configurable depuis l'admin, max 50
   } = req.body || {};
 
   try {
@@ -93,7 +94,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const BATCH_LIMIT  = 10;
+    const BATCH_LIMIT   = Math.min(Math.max(1, Number(batchSize) || 20), 50);
     const batchToImport = qidsToImport.slice(0, BATCH_LIMIT);
 
     // FIX: await obligatoire
