@@ -3,8 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
-  Search, Loader2, Plus, User, Globe, ToggleLeft, ToggleRight,
-  ChevronDown, ChevronUp, CheckCircle2, AlertCircle
+  Search, Loader2, Plus, User, Globe, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import axios from 'axios';
 import { WikidataSearchResult, EntityType } from '@/types';
@@ -35,12 +34,6 @@ export default function AddEntityModal({ isOpen, onClose, onAddSuccess }: AddEnt
   const [addingId, setAddingId] = useState<string | null>(null);
   const [addPhase, setAddPhase] = useState<'idle' | 'fetching' | 'done' | 'error'>('idle');
   const [addResult, setAddResult] = useState<AddResult | null>(null);
-
-  // Vote settings for new politician
-  const [showVoteSettings, setShowVoteSettings] = useState(false);
-  const [voteEnabled, setVoteEnabled] = useState(true);
-  const [block1Enabled, setBlock1Enabled] = useState(true);
-  const [block2Enabled, setBlock2Enabled] = useState(true);
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -80,13 +73,13 @@ export default function AddEntityModal({ isOpen, onClose, onAddSuccess }: AddEnt
           onAddSuccess(`✓ Pays "${item.label}" (${item.id}) ajouté à la BDD !`);
         }
       } else {
-        // ── Politicien : enrichissement Wikidata immédiat côté serveur ──
-        setAddPhase('fetching'); // "Récupération depuis Wikidata..."
+        // ── Politicien : opinion directe et questions activés par défaut ──
+        setAddPhase('fetching');
         const res = await axios.post('/api/tracked', {
           entityId: item.id,
-          vote_enabled: voteEnabled,
-          block1_enabled: block1Enabled,
-          block2_enabled: block2Enabled,
+          vote_enabled: true,
+          block1_enabled: true,
+          block2_enabled: true,
         });
         if (res.data.success) {
           setAddPhase('done');
@@ -115,31 +108,10 @@ export default function AddEntityModal({ isOpen, onClose, onAddSuccess }: AddEnt
   const handleClose = () => {
     setQuery('');
     setResults([]);
-    setShowVoteSettings(false);
-    setVoteEnabled(true);
-    setBlock1Enabled(true);
-    setBlock2Enabled(true);
     setAddPhase('idle');
     setAddResult(null);
     onClose();
   };
-
-  const VoteToggle = ({
-    value, onChange, label, sub
-  }: { value: boolean; onChange: (v: boolean) => void; label: string; sub?: string }) => (
-    <div className={`flex items-center justify-between rounded-lg border px-3 py-2.5 transition-colors ${value ? 'border-blue-200 bg-blue-50/60' : 'border-slate-200 bg-white'}`}>
-      <div>
-        <div className="text-xs font-semibold text-slate-800">{label}</div>
-        {sub && <div className="text-[10px] text-slate-500 mt-0.5">{sub}</div>}
-      </div>
-      <button type="button" onClick={() => onChange(!value)} className="ml-3 focus:outline-none">
-        {value
-          ? <ToggleRight className="h-6 w-6 text-blue-600" />
-          : <ToggleLeft className="h-6 w-6 text-slate-400" />
-        }
-      </button>
-    </div>
-  );
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -169,37 +141,6 @@ export default function AddEntityModal({ isOpen, onClose, onAddSuccess }: AddEnt
             </label>
           </div>
 
-          {/* Vote Settings */}
-          {entityType === 'politician' && (
-            <div className="rounded-lg border border-slate-200 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setShowVoteSettings(v => !v)}
-                className="flex w-full items-center justify-between bg-slate-50 px-4 py-3 text-left hover:bg-slate-100 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <div className={`h-2 w-2 rounded-full ${voteEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                  <span className="text-sm font-semibold text-slate-800">Paramètres de vote</span>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${voteEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                    {voteEnabled ? 'Activé' : 'Désactivé'}
-                  </span>
-                </div>
-                {showVoteSettings ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
-              </button>
-              {showVoteSettings && (
-                <div className="px-4 py-3 space-y-2 border-t border-slate-200 bg-white">
-                  <VoteToggle value={voteEnabled} onChange={setVoteEnabled} label="Activer les votes pour ce politicien" sub="Le visiteur pourra exprimer son opinion sur sa fiche" />
-                  {voteEnabled && (
-                    <div className="ml-4 space-y-2 border-l-2 border-blue-200 pl-3">
-                      <VoteToggle value={block1Enabled} onChange={setBlock1Enabled} label="Bloc 1 — Opinion directe" sub="❤️ Adoration · 👍 Soutien · 👎 Désapprobation · 😱 Indignation" />
-                      <VoteToggle value={block2Enabled} onChange={setBlock2Enabled} label="Bloc 2 — Question d'actualité" sub="Affiche la question active Oui/Non" />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Search Bar */}
           <form onSubmit={handleSearch} className="flex gap-2">
             <Input
@@ -222,7 +163,7 @@ export default function AddEntityModal({ isOpen, onClose, onAddSuccess }: AddEnt
               {addResult.success ? (
                 <div className="flex items-start gap-3">
                   {addResult.entity?.photo_url ? (
-                    <img src={addResult.entity.photo_url} alt="" className="h-14 w-14 rounded-xl object-cover border border-emerald-200 shrink-0" />
+                    <img src={addResult.entity.photo_url} alt="" className="h-14 w-14 rounded-xl object-cover object-[center_12%] border border-emerald-200 shrink-0" />
                   ) : (
                     <div className="h-14 w-14 rounded-xl bg-emerald-200 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="h-7 w-7 text-emerald-700" />
@@ -299,11 +240,11 @@ export default function AddEntityModal({ isOpen, onClose, onAddSuccess }: AddEnt
             )}
           </div>
 
-          {/* Info banner about enrichment */}
+          {/* Info banner about auto-enabled voting & enrichment */}
           {entityType === 'politician' && addPhase === 'idle' && results.length > 0 && (
             <p className="text-center text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-400 inline-block" />
-              Lors de l'ajout, la photo, biographie et pays sont automatiquement récupérés depuis Wikidata et sauvegardés.
+              Les votes d'opinion et questions d'actualité sont automatiquement activés à l'ajout.
             </p>
           )}
         </div>
