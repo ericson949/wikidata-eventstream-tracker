@@ -218,19 +218,7 @@ export default function App() {
             onSwitchView={setView}
           />
 
-          <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-            {/* Header Banner */}
-            <div className="flex items-start sm:items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-blue-950 via-slate-900 to-blue-900 p-4 sm:p-6 text-white shadow-md">
-              <div className="min-w-0">
-                <h1 className="font-serif text-lg sm:text-2xl font-bold leading-tight">Console d'Administration Politili</h1>
-                <p className="text-xs text-blue-200 mt-1">Gérez la publication, modifiez la BDD des pays et consultez les sondages d'opinion.</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={loadData} className="shrink-0 bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white">
-                <RefreshCw className="h-3.5 w-3.5 sm:mr-2" />
-                <span className="hidden sm:inline">Actualiser</span>
-              </Button>
-            </div>
-
+          <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
             {/* SHADCN TABS FOR STRICT SECTION ISOLATION */}
             <Tabs value={adminTab} onValueChange={setAdminTab} className="w-full space-y-6">
               {/* Mobile Select Dropdown (No scroll, clean dropdown) */}

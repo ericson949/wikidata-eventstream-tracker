@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import {
   Download, Loader2, ChevronDown, ChevronUp, CheckCircle2,
   AlertCircle, Info, Users, Skull, Shield, Crown, Briefcase,
-  Play, Eye
+  Play, Eye, Landmark, Building2, UserCheck, CheckSquare, Square
 } from 'lucide-react';
 
 interface ImportResult {
@@ -19,12 +19,23 @@ interface ImportResult {
   message: string;
 }
 
+const ALL_CATEGORY_OPTIONS = [
+  { value: 'president', label: 'Présidents / Chefs d\'État', icon: Crown },
+  { value: 'prime_minister', label: 'Premiers Ministres', icon: Briefcase },
+  { value: 'military', label: 'Chefs militaires / Juntes', icon: Shield },
+  { value: 'minister', label: 'Ministres', icon: Landmark },
+  { value: 'deputy', label: 'Députés / Assemblée', icon: UserCheck },
+  { value: 'senator', label: 'Sénateurs', icon: Landmark },
+  { value: 'business', label: 'Chefs d\'entreprise', icon: Building2 },
+];
+
 export default function ImportLeadersPanel({ onImportDone }: { onImportDone: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [includeDeceased, setIncludeDeceased] = useState(false);
   const [includeFormer, setIncludeFormer] = useState(false);
   const [defaultStatus, setDefaultStatus] = useState<'Désactivé' | 'Activé'>('Désactivé');
-  const [types, setTypes] = useState<string[]>(['president']);
+  // Toutes les options cochées par défaut
+  const [types, setTypes] = useState<string[]>(ALL_CATEGORY_OPTIONS.map(o => o.value));
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<'idle' | 'scanning' | 'importing' | 'done' | 'error'>('idle');
   const [result, setResult] = useState<ImportResult | null>(null);
@@ -89,28 +100,46 @@ export default function ImportLeadersPanel({ onImportDone }: { onImportDone: () 
 
           {/* Types de dirigeants */}
           <div>
-            <p className="text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
-              Types de dirigeants à importer
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                Types de dirigeants à importer ({types.length}/{ALL_CATEGORY_OPTIONS.length})
+              </p>
+              <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-blue-800 select-none hover:text-blue-900">
+                <input
+                  type="checkbox"
+                  checked={types.length === ALL_CATEGORY_OPTIONS.length}
+                  onChange={() => {
+                    if (types.length === ALL_CATEGORY_OPTIONS.length) {
+                      setTypes([]);
+                    } else {
+                      setTypes(ALL_CATEGORY_OPTIONS.map(o => o.value));
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+                Tout cocher
+              </label>
+            </div>
+
             <div className="flex flex-wrap gap-2">
-              {[
-                { value: 'president', label: 'Présidents / Chefs d\'État', icon: Crown },
-                { value: 'prime_minister', label: 'Premiers Ministres', icon: Briefcase },
-                { value: 'military', label: 'Chefs militaires / Juntes', icon: Shield },
-              ].map(({ value, label, icon: Icon }) => (
-                <button
-                  key={value}
-                  onClick={() => toggleType(value)}
-                  className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                    types.includes(value)
-                      ? 'border-blue-600 bg-blue-600 text-white'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300'
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {label}
-                </button>
-              ))}
+              {ALL_CATEGORY_OPTIONS.map(({ value, label, icon: Icon }) => {
+                const isSelected = types.includes(value);
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => toggleType(value)}
+                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      isSelected
+                        ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
+                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-blue-300'
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

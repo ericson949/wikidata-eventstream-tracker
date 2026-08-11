@@ -24,6 +24,26 @@ function buildSparqlQuery({ includeDeceased, includeFormer, types }) {
     // Dirigeants de juntes / conseils militaires
     positionFilters.push(`{ ?person wdt:P39 wd:Q17279032 }`);        // chef de junta
   }
+  if (types.includes('minister')) {
+    // Ministres
+    positionFilters.push(`{ ?person wdt:P39 wd:Q83307 }`);           // ministre
+    positionFilters.push(`{ ?person wdt:P39 wd:Q1074044 }`);        // cabinet minister
+  }
+  if (types.includes('deputy')) {
+    // Députés / Membres de l'Assemblée nationale
+    positionFilters.push(`{ ?person wdt:P39 wd:Q1541400 }`);        // membre du parlement
+    positionFilters.push(`{ ?person wdt:P39 wd:Q486839 }`);         // membre de l'assemblée nationale
+  }
+  if (types.includes('senator')) {
+    // Sénateurs
+    positionFilters.push(`{ ?person wdt:P39 wd:Q82955 }`);          // sénateur
+  }
+  if (types.includes('business')) {
+    // Chefs d'entreprise / Business executives / Entrepreneurs
+    positionFilters.push(`{ ?person wdt:P106 wd:Q488205 }`);        // businessperson
+    positionFilters.push(`{ ?person wdt:P106 wd:Q131524 }`);        // entrepreneur
+    positionFilters.push(`{ ?person wdt:P106 wd:Q43845 }`);         // CEO / business executive
+  }
 
   // Si aucun type sélectionné, prendre tous les chefs d'État
   const positionClause = positionFilters.length > 0
@@ -35,15 +55,10 @@ function buildSparqlQuery({ includeDeceased, includeFormer, types }) {
     : '  FILTER NOT EXISTS { ?person wdt:P570 [] }\n';
 
   return `
-SELECT DISTINCT ?person
-  (SAMPLE(?labelFr) AS ?labelFr)
-  (SAMPLE(?labelEn) AS ?labelEn)
-  (SAMPLE(?descFr) AS ?descFr)
-  (SAMPLE(?descEn) AS ?descEn)
-WHERE {
+SELECT DISTINCT ?person WHERE {
   ${positionClause}
 
-  # Le pays de citoyenneté ou pays associé doit être en Afrique
+  # Le pays de citoyenneté (P27) ou pays associé (P17) doit être en Afrique (Q15)
   {
     ?person wdt:P27 ?country .
     ?country wdt:P30 wd:Q15 .
@@ -52,14 +67,7 @@ WHERE {
     ?country wdt:P30 wd:Q15 .
   }
 
-${deceasedFilter}
-  # Récupérer labels FR et EN
-  OPTIONAL { ?person rdfs:label ?labelFr . FILTER(LANG(?labelFr) = "fr") }
-  OPTIONAL { ?person rdfs:label ?labelEn . FILTER(LANG(?labelEn) = "en") }
-  OPTIONAL { ?person schema:description ?descFr . FILTER(LANG(?descFr) = "fr") }
-  OPTIONAL { ?person schema:description ?descEn . FILTER(LANG(?descEn) = "en") }
-}
-GROUP BY ?person
+${deceasedFilter}}
 LIMIT 300
 `.trim();
 }
@@ -79,7 +87,7 @@ export default async function handler(req, res) {
     includeDeceased = false,
     includeFormer = false,
     defaultStatus = 'Désactivé',
-    types = ['president'],
+    types = ['president', 'prime_minister', 'military', 'minister', 'deputy', 'senator', 'business'],
     dryRun = false,
   } = req.body || {};
 
@@ -94,7 +102,7 @@ export default async function handler(req, res) {
         'User-Agent': 'PolitiliBot/2.0 (politili.com)',
         'Accept': 'application/sparql-results+json',
       },
-      timeout: 30000,
+      timeout: 45000,
     });
 
     sparqlResults = sparqlRes.data?.results?.bindings || [];
@@ -106,20 +114,12 @@ export default async function handler(req, res) {
   }
 
   // ── 2. Extraire les Q-IDs uniques ────────────────────────────────────────
-  // On dédoublonne par Q-ID ; on garde les labels SPARQL comme métadonnées de preview
   const seenQids = new Set();
-  const sparqlPreview = {}; // qid -> { labelFr, labelEn, descFr, descEn }
-
   for (const b of sparqlResults) {
     const qid = b.person?.value?.split('/').pop()?.toUpperCase();
-    if (!qid || seenQids.has(qid)) continue;
-    seenQids.add(qid);
-    sparqlPreview[qid] = {
-      labelFr: b.labelFr?.value || null,
-      labelEn: b.labelEn?.value || null,
-      descFr:  b.descFr?.value  || null,
-      descEn:  b.descEn?.value  || null,
-    };
+    if (qid && !seenQids.has(qid)) {
+      seenQids.add(qid);
+    }
   }
 
   const qids = [...seenQids];
