@@ -1,0 +1,23 @@
+# Vrais Présidents et Chefs d'État réels des pays d'Afrique (en exercice ou anciens)
+SELECT DISTINCT ?person WHERE {
+  VALUES ?country { {{COUNTRIES}} }
+  
+  # 1. Chefs d'État actuels (P35) ou chefs de gouvernement actuels (P6)
+  { ?country wdt:P35 ?person . }
+  UNION
+  { ?country wdt:P6 ?person . }
+  UNION
+  # 2. Titulaires de postes officiels de Présidents / Chefs d'État des pays africains
+  {
+    ?person wdt:P27 ?country .
+    ?person wdt:P39 ?office .
+    VALUES ?office {
+      wd:Q30461 wd:Q18810062 wd:Q19158709 wd:Q48352 wd:Q17279032
+      wd:Q19158914 wd:Q19109718 wd:Q21295979 wd:Q19116034 wd:Q19125297
+      wd:Q113669206 wd:Q19056637 wd:Q19056087 wd:Q273884 wd:Q28003132
+      wd:Q16773091 wd:Q134311805 wd:Q19114674 wd:Q122067521 wd:Q29032770
+    }
+  }
+
+  FILTER NOT EXISTS { ?person wdt:P570 [] }
+}

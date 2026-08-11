@@ -1,0 +1,7 @@
+# Militants politiques africains
+SELECT DISTINCT ?person WHERE {
+  ?country wdt:P30 wd:Q15 .
+  ?person wdt:P27 ?country .
+  ?person wdt:P106 wd:Q11499147 .
+  FILTER NOT EXISTS { ?person wdt:P570 [] }
+}

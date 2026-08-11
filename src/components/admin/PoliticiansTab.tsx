@@ -10,6 +10,8 @@ import InputSelect from '@/components/ui/InputSelect';
 import { Politician, Country } from '@/types';
 import ImportLeadersPanel from './ImportLeadersPanel';
 
+import PaginationControls from '@/components/ui/PaginationControls';
+
 interface PoliticiansTabProps {
   politicians: Politician[];
   countries: Country[];
@@ -29,6 +31,10 @@ export default function PoliticiansTab({
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
   const filteredPoliticians = politicians.filter(p => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch = !q ||
@@ -42,6 +48,14 @@ export default function PoliticiansTab({
 
     return matchesSearch && matchesCountry && matchesStatus;
   });
+
+  // Reset to page 1 on filter/search change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCountry, selectedStatus]);
+
+  const totalPages = Math.ceil(filteredPoliticians.length / pageSize) || 1;
+  const paginatedPoliticians = filteredPoliticians.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const totalCount = politicians.length;
   const activeCount = politicians.filter(p => p.status === 'Activé').length;
@@ -151,7 +165,7 @@ export default function PoliticiansTab({
       {/* ── Mobile View: Cards Grid (< md) ── */}
       {filteredPoliticians.length > 0 && (
         <div className="grid grid-cols-1 gap-4 md:hidden">
-          {filteredPoliticians.map((p) => (
+          {paginatedPoliticians.map((p) => (
             <Card key={p.id} className="border-slate-200 p-4 shadow-sm space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -231,7 +245,7 @@ export default function PoliticiansTab({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPoliticians.map((p) => (
+              {paginatedPoliticians.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -314,6 +328,19 @@ export default function PoliticiansTab({
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {/* Pagination Controls Bottom */}
+      {filteredPoliticians.length > 0 && (
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filteredPoliticians.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[15, 30, 50, 100]}
+        />
       )}
     </div>
   );

@@ -21,12 +21,27 @@ async function getCountriesMap() {
   return map;
 }
 
+// ─── HTTP GET avec Retry automatique sur 429 / 503 (Rate Limit) ───────────────
+async function fetchWithRetry(url, options = {}, retries = 4, backoff = 2000) {
+  try {
+    return await axios.get(url, options);
+  } catch (error) {
+    const status = error.response?.status;
+    if ((status === 429 || status === 503 || error.code === 'ECONNRESET') && retries > 0) {
+      console.warn(`  ⚠️ Wikidata Rate Limit (${status || error.code}). Pause de ${backoff}ms avant retry (${retries} restant(s))...`);
+      await new Promise(r => setTimeout(r, backoff));
+      return fetchWithRetry(url, options, retries - 1, backoff * 2);
+    }
+    throw error;
+  }
+}
+
 // ─── Fetch + enrich depuis Wikidata ──────────────────────────────────────────
 export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
   const url = `https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`;
-  const res = await axios.get(url, {
+  const res = await fetchWithRetry(url, {
     headers: { 'User-Agent': 'PolitiliBot/2.0 (politili.com)' },
-    timeout: 8000
+    timeout: 12000
   });
   const entity = res.data?.entities?.[qid];
   if (!entity) throw new Error(`Entité ${qid} introuvable sur Wikidata`);
@@ -46,6 +61,27 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
   const positionQid = getClaimVal('P39');
   const birthStr = getClaimStr('P569')?.time ? getClaimStr('P569').time.substring(1, 11) : null;
   const deathStr = getClaimStr('P570')?.time ? getClaimStr('P570').time.substring(1, 11) : null;
+
+  // ── Analyse de la fin du dernier poste politique (P39 -> qualifiers P582) ──
+  let latestEndTimeYear = null;
+  let hasActiveOffice = false;
+  const p39Claims = entity.claims?.P39 || [];
+  for (const claim of p39Claims) {
+    const endTimeStr = claim.qualifiers?.P582?.[0]?.datavalue?.value?.time;
+    if (!endTimeStr) {
+      hasActiveOffice = true; // Pas de date de fin = poste réputé en cours
+    } else {
+      const year = parseInt(endTimeStr.substring(1, 5), 10);
+      if (!isNaN(year) && (latestEndTimeYear === null || year > latestEndTimeYear)) {
+        latestEndTimeYear = year;
+      }
+    }
+  }
+
+  const currentYear = new Date().getFullYear();
+  const cutoffYear = currentYear - 20; // ex: 2026 - 20 = 2006
+  const isOlderThan20Years = !hasActiveOffice && latestEndTimeYear !== null && latestEndTimeYear < cutoffYear;
+
   const imageFilename = getClaimStr('P18');
   const photoUrl = imageFilename
     ? `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(imageFilename)}`
@@ -61,8 +97,8 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
       countryNameEn = countriesMap[cleanQid]; // la map n'a que FR pour l'instant
     } else {
       try {
-        const cRes = await axios.get(`https://www.wikidata.org/wiki/Special:EntityData/${countryQid}.json`, {
-          headers: { 'User-Agent': 'PolitiliBot/2.0' }, timeout: 4000
+        const cRes = await fetchWithRetry(`https://www.wikidata.org/wiki/Special:EntityData/${countryQid}.json`, {
+          headers: { 'User-Agent': 'PolitiliBot/2.0' }, timeout: 6000
         });
         const cEntity = cRes.data?.entities?.[countryQid];
         countryName = cEntity?.labels?.fr?.value || cEntity?.labels?.en?.value || 'Afrique';
@@ -111,7 +147,9 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
     // ── Dates & état ────────────────────────────────────────────────────
     birth_date: birthStr,
     death_date: deathStr,
-    actor_state: deathStr ? 'Décédé' : 'En exercice',
+    actor_state: deathStr ? 'Décédé' : (isOlderThan20Years ? 'Ancien dirigeant' : 'En exercice'),
+    latest_end_year: latestEndTimeYear,
+    is_older_than_20_years: isOlderThan20Years,
     // ── Entités liées ────────────────────────────────────────────────────
     country: { id: countryQid, name: countryName, name_en: countryNameEn },
     political_party: { id: partyQid, name: partyQid ? 'Parti officiel' : 'Indépendant' },

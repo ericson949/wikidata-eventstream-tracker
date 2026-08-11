@@ -1,0 +1,8 @@
+# Ministres africains
+SELECT DISTINCT ?person WHERE {
+  VALUES ?country { {{COUNTRIES}} }
+  ?person wdt:P27 ?country .
+  VALUES ?pos { wd:Q83307 wd:Q1074044 }
+  ?person wdt:P39 ?pos .
+  FILTER NOT EXISTS { ?person wdt:P570 [] }
+}

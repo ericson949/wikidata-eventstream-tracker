@@ -16,6 +16,7 @@ import InputSelect from '@/components/ui/InputSelect';
 import { Button } from '@/components/ui/button';
 import { Search, X, UserCheck, Globe, BarChart3, RefreshCw, ChevronDown } from 'lucide-react';
 import { Politician, Country } from '@/types';
+import PaginationControls from '@/components/ui/PaginationControls';
 
 export default function App() {
   const [view, setView] = useState<'public' | 'admin'>(() => {
@@ -35,10 +36,17 @@ export default function App() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Search & Filters on Public View
+  // Search & Filters & Pagination on Public View
   const [publicSearch, setPublicSearch] = useState('');
   const [publicCountry, setPublicCountry] = useState('');
   const [publicState, setPublicState] = useState('');
+  const [publicPage, setPublicPage] = useState(1);
+  const [publicPageSize, setPublicPageSize] = useState(16);
+
+  // Reset to page 1 on public filter change
+  useEffect(() => {
+    setPublicPage(1);
+  }, [publicSearch, publicCountry, publicState]);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -119,6 +127,12 @@ export default function App() {
     const matchesState = !publicState || p.actor_state === publicState;
     return matchesSearch && matchesCountry && matchesState;
   });
+
+  const totalPublicPages = Math.ceil(filteredPublicPoliticians.length / publicPageSize) || 1;
+  const paginatedPublicPoliticians = filteredPublicPoliticians.slice(
+    (publicPage - 1) * publicPageSize,
+    publicPage * publicPageSize
+  );
 
   return (
     <TooltipProvider>
@@ -201,10 +215,23 @@ export default function App() {
               <div className="py-20 text-center text-slate-500 font-medium">Aucun dirigeant trouvé.</div>
             ) : (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredPublicPoliticians.map((p) => (
+                {paginatedPublicPoliticians.map((p) => (
                   <PoliticianCard key={p.id} politician={p} onSelect={setSelectedPolitician} />
                 ))}
               </div>
+            )}
+
+            {/* Pagination Controls Bottom */}
+            {!loading && filteredPublicPoliticians.length > 0 && (
+              <PaginationControls
+                currentPage={publicPage}
+                totalPages={totalPublicPages}
+                pageSize={publicPageSize}
+                totalItems={filteredPublicPoliticians.length}
+                onPageChange={setPublicPage}
+                onPageSizeChange={setPublicPageSize}
+                pageSizeOptions={[12, 24, 48, 96]}
+              />
             )}
           </main>
         </div>

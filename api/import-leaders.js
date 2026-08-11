@@ -7,67 +7,71 @@ const FILE = 'africa_leaders.json';
 const COUNTRIES_KEY = 'countries';
 const COUNTRIES_FILE = 'countries.json';
 
-// ─── Requête SPARQL Wikidata ──────────────────────────────────────────────────
+// ─── Requête SPARQL Wikidata (Optimisée pour l'Afrique) ────────────────────────
 function buildSparqlQuery({ includeDeceased, includeFormer, types }) {
-  const positionFilters = [];
+  const p39Qids = [];
+  const p106Qids = [];
 
   if (types.includes('president')) {
-    // Chef d'État / Président de la République
-    positionFilters.push(`{ ?person wdt:P39 wd:Q30461 }`);           // président
-    positionFilters.push(`{ ?person wdt:P39 wd:Q18810062 }`);        // chef d'État
-    positionFilters.push(`{ ?person wdt:P39 wd:Q48352 }`);           // chef de gouvernement
+    p39Qids.push('wd:Q30461', 'wd:Q18810062', 'wd:Q48352');
   }
   if (types.includes('prime_minister')) {
-    positionFilters.push(`{ ?person wdt:P39 wd:Q1006876 }`);         // premier ministre
+    p39Qids.push('wd:Q1006876');
   }
   if (types.includes('military')) {
-    // Dirigeants de juntes / conseils militaires
-    positionFilters.push(`{ ?person wdt:P39 wd:Q17279032 }`);        // chef de junta
+    p39Qids.push('wd:Q17279032');
   }
   if (types.includes('minister')) {
-    // Ministres
-    positionFilters.push(`{ ?person wdt:P39 wd:Q83307 }`);           // ministre
-    positionFilters.push(`{ ?person wdt:P39 wd:Q1074044 }`);        // cabinet minister
+    p39Qids.push('wd:Q83307', 'wd:Q1074044');
   }
   if (types.includes('deputy')) {
-    // Députés / Membres de l'Assemblée nationale
-    positionFilters.push(`{ ?person wdt:P39 wd:Q1541400 }`);        // membre du parlement
-    positionFilters.push(`{ ?person wdt:P39 wd:Q486839 }`);         // membre de l'assemblée nationale
+    p39Qids.push('wd:Q1541400', 'wd:Q486839');
   }
   if (types.includes('senator')) {
-    // Sénateurs
-    positionFilters.push(`{ ?person wdt:P39 wd:Q82955 }`);          // sénateur
+    p39Qids.push('wd:Q82955');
   }
   if (types.includes('business')) {
-    // Chefs d'entreprise / Business executives / Entrepreneurs
-    positionFilters.push(`{ ?person wdt:P106 wd:Q488205 }`);        // businessperson
-    positionFilters.push(`{ ?person wdt:P106 wd:Q131524 }`);        // entrepreneur
-    positionFilters.push(`{ ?person wdt:P106 wd:Q43845 }`);         // CEO / business executive
+    p106Qids.push('wd:Q488205', 'wd:Q131524', 'wd:Q43845');
   }
 
-  // Si aucun type sélectionné, prendre tous les chefs d'État
-  const positionClause = positionFilters.length > 0
-    ? positionFilters.join('\n  UNION\n  ')
-    : `{ ?person wdt:P39 wd:Q30461 }`;
+  // Fallback si rien de coché
+  if (p39Qids.length === 0 && p106Qids.length === 0) {
+    p39Qids.push('wd:Q30461');
+  }
+
+  const roleClauses = [];
+  if (p39Qids.length > 0) {
+    roleClauses.push(`{ VALUES ?p39Role { ${p39Qids.join(' ')} } ?person wdt:P39 ?p39Role . }`);
+  }
+  if (p106Qids.length > 0) {
+    roleClauses.push(`{ VALUES ?p106Role { ${p106Qids.join(' ')} } ?person wdt:P106 ?p106Role . }`);
+  }
+
+  const roleUnion = roleClauses.join(' UNION ');
 
   const deceasedFilter = includeDeceased
     ? ''
-    : '  FILTER NOT EXISTS { ?person wdt:P570 [] }\n';
+    : 'FILTER NOT EXISTS { ?person wdt:P570 [] }\n';
+
+  const formerFilter = includeFormer
+    ? ''
+    : `OPTIONAL { ?person p:P39/pq:P582 ?endTime . }
+  FILTER (!BOUND(?endTime) || ?endTime >= "2006-01-01T00:00:00Z"^^xsd:dateTime)`;
 
   return `
 SELECT DISTINCT ?person WHERE {
-  ${positionClause}
+  # 1. Restreindre d'abord aux pays d'Afrique (54 pays du continent Q15)
+  ?country wdt:P30 wd:Q15 .
+  
+  # 2. Citoyenneté (P27) ou rattachement d'État (P17)
+  { ?person wdt:P27 ?country . } UNION { ?person wdt:P17 ?country . }
 
-  # Le pays de citoyenneté (P27) ou pays associé (P17) doit être en Afrique (Q15)
-  {
-    ?person wdt:P27 ?country .
-    ?country wdt:P30 wd:Q15 .
-  } UNION {
-    ?person wdt:P17 ?country .
-    ?country wdt:P30 wd:Q15 .
-  }
+  # 3. Filtrer par les rôles/professions sélectionnés
+  ${roleUnion}
 
-${deceasedFilter}}
+  ${formerFilter}
+  ${deceasedFilter}
+}
 LIMIT 300
 `.trim();
 }
@@ -93,6 +97,7 @@ export default async function handler(req, res) {
 
   // ── 1. Requête SPARQL ────────────────────────────────────────────────────
   let sparqlResults = [];
+  console.log(`[import-leaders] Lancement de la requête SPARQL Wikidata (types: ${types.join(', ')})...`);
   try {
     const query = buildSparqlQuery({ includeDeceased, includeFormer, types });
     const sparqlUrl = `https://query.wikidata.org/sparql?query=${encodeURIComponent(query)}&format=json`;
@@ -106,7 +111,9 @@ export default async function handler(req, res) {
     });
 
     sparqlResults = sparqlRes.data?.results?.bindings || [];
+    console.log(`[import-leaders] SPARQL terminé : ${sparqlResults.length} résulat(s) retourné(s).`);
   } catch (e) {
+    console.error(`[import-leaders] ERREUR SPARQL : ${e.message}`);
     return res.status(500).json({
       success: false,
       message: `Erreur lors de la requête SPARQL Wikidata : ${e.message}`,
@@ -125,6 +132,7 @@ export default async function handler(req, res) {
   const qids = [...seenQids];
 
   if (qids.length === 0) {
+    console.log(`[import-leaders] Aucun Q-ID unique trouvé.`);
     return res.status(200).json({
       success: true,
       imported: 0,
@@ -141,8 +149,11 @@ export default async function handler(req, res) {
   const toImport = qids.filter(qid => !existingIds.has(qid));
   const skipped = qids.length - toImport.length;
 
+  console.log(`[import-leaders] total_trouvés=${qids.length} | à_importer=${toImport.length} | déjà_présents=${skipped}`);
+
   // ── 4. Mode simulation (dry run) ─────────────────────────────────────────
   if (dryRun) {
+    console.log(`[import-leaders] Mode simulation terminé.`);
     return res.status(200).json({
       success: true,
       dryRun: true,
@@ -167,6 +178,8 @@ export default async function handler(req, res) {
   const BATCH_SIZE = 5;
   const DELAY_MS = 500;
 
+  console.log(`[import-leaders] Début de l'enrichissement Wikidata pour ${toImport.length} entités...`);
+
   for (let i = 0; i < toImport.length; i += BATCH_SIZE) {
     const batch = toImport.slice(i, i + BATCH_SIZE);
 
@@ -184,8 +197,10 @@ export default async function handler(req, res) {
           importedVia: 'sparql_auto',
         };
         imported.push(newItem);
+        console.log(`  [OK]   ${qid} => ${enriched.fullname} (${enriched.country?.name || 'Afrique'})`);
       } catch (e) {
         errors.push({ qid, error: e.message });
+        console.error(`  [ERR]  ${qid} => ${e.message}`);
       }
     }));
 
@@ -195,10 +210,10 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── 7. Sauvegarder ──────────────────────────────────────────────────────
   if (imported.length > 0) {
     const updatedLeaders = [...existingLeaders, ...imported];
     await dbWrite(KEY, updatedLeaders, FILE);
+    console.log(`[import-leaders] Sauvegarde effectuée : +${imported.length} entités dans ${FILE}.`);
   }
 
   return res.status(200).json({

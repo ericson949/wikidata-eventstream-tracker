@@ -1,0 +1,7 @@
+# Fonctions politiques africaines
+SELECT DISTINCT ?person WHERE {
+  VALUES ?country { {{COUNTRIES}} }
+  ?person wdt:P27 ?country .
+  ?person wdt:P39 ?position .
+  FILTER NOT EXISTS { ?person wdt:P570 [] }
+}

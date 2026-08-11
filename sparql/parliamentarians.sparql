@@ -1,0 +1,8 @@
+# Députés et parlementaires africains
+SELECT DISTINCT ?person WHERE {
+  VALUES ?country { {{COUNTRIES}} }
+  ?person wdt:P27 ?country .
+  VALUES ?pos { wd:Q1541400 wd:Q486839 }
+  ?person wdt:P39 ?pos .
+  FILTER NOT EXISTS { ?person wdt:P570 [] }
+}

@@ -1,0 +1,7 @@
+# Leaders de l'opposition africains
+SELECT DISTINCT ?person WHERE {
+  ?country wdt:P30 wd:Q15 .
+  ?person wdt:P27 ?country .
+  ?person wdt:P39 wd:Q620110 .
+  FILTER NOT EXISTS { ?person wdt:P570 [] }
+}

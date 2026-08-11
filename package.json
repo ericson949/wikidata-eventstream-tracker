@@ -8,7 +8,14 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "vercel-dev": "vercel dev --listen 3005"
+    "vercel-dev": "vercel dev --listen 3005",
+    "collect:countries": "node scripts/collect-countries.mjs",
+    "collect:ids": "node scripts/collect-ids.mjs",
+    "collect:commons": "node scripts/collect-commons.mjs",
+    "pipeline:enrich": "node scripts/enrich-pipeline.mjs",
+    "enrich": "node scripts/enrich-pipeline.mjs",
+    "pipeline:all": "node scripts/collect-countries.mjs && node scripts/collect-ids.mjs && node scripts/collect-commons.mjs && node scripts/enrich-pipeline.mjs",
+    "cron": "node scripts/cron-scheduler.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.6",

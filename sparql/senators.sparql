@@ -1,0 +1,13 @@
+# Sénateurs africains (actifs ou fin de mandat < 20 ans)
+SELECT DISTINCT ?person WHERE {
+  VALUES ?country { {{COUNTRIES}} }
+  ?person wdt:P27 ?country .
+  
+  ?person p:P39 ?statement .
+  ?statement ps:P39 wd:Q82955 .
+
+  OPTIONAL { ?statement pq:P582 ?endTime . }
+  FILTER (!BOUND(?endTime) || ?endTime >= "2006-01-01T00:00:00Z"^^xsd:dateTime)
+
+  FILTER NOT EXISTS { ?person wdt:P570 [] }
+}
