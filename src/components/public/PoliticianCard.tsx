@@ -21,12 +21,12 @@ export default function PoliticianCard({ politician, onSelect }: PoliticianCardP
       onClick={() => onSelect(politician)}
       className="group cursor-pointer overflow-hidden border-slate-200 bg-white transition-all hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg"
     >
-      <div className="relative h-56 w-full overflow-hidden bg-slate-100">
+      <div className="relative h-60 w-full overflow-hidden bg-slate-900">
         {politician.photo_url ? (
           <img
             src={politician.photo_url}
             alt={politician.fullname}
-            className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover object-[center_12%] transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-slate-200 font-serif text-5xl font-bold text-slate-400">

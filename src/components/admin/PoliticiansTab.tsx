@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, X, Trash2, ExternalLink, RefreshCw } from 'lucide-react';
+import { Search, X, Trash2, ExternalLink, RefreshCw, Vote } from 'lucide-react';
 import InputSelect from '@/components/ui/InputSelect';
 import { Politician, Country } from '@/types';
 

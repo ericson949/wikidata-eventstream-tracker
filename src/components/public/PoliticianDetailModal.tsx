@@ -302,21 +302,21 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
           </button>
 
           {/* Hero Header */}
-          <div className="relative h-48 bg-gradient-to-br from-blue-950 via-slate-900 to-indigo-950 overflow-hidden">
+          <div className="relative h-48 sm:h-56 bg-gradient-to-br from-blue-950 via-slate-900 to-indigo-950 overflow-hidden">
             {politician.photo_url && (
               <img
                 src={politician.photo_url}
                 alt={politician.fullname}
-                className="absolute inset-0 h-full w-full object-cover object-center opacity-30"
+                className="absolute inset-0 h-full w-full object-cover object-[center_15%] opacity-35"
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-900/60 to-transparent" />
             <div className="absolute bottom-4 sm:bottom-5 left-4 right-4 sm:left-6 sm:right-6 flex items-end gap-3 sm:gap-4">
               {politician.photo_url ? (
                 <img
                   src={politician.photo_url}
                   alt={politician.fullname}
-                  className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl object-cover object-center border-2 border-white/20 shadow-lg shrink-0"
+                  className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl object-cover object-[center_15%] border-2 border-white/20 shadow-lg shrink-0"
                 />
               ) : (
                 <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl bg-white/10 border-2 border-white/20 flex items-center justify-center font-serif text-2xl sm:text-3xl font-bold text-white shrink-0">
@@ -364,15 +364,19 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
                   {politician.birth_date}
                 </span>
               )}
-              {politician.source_url && (
+              {(politician.source_url || politician.fullname) && (
                 <a
-                  href={politician.source_url}
+                  href={
+                    politician.source_url && !politician.source_url.includes('wikidata.org')
+                      ? politician.source_url
+                      : `https://fr.wikipedia.org/wiki/${encodeURIComponent((politician.fullname || politician.id).replace(/ /g, '_'))}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 rounded-full bg-blue-900/10 px-3 py-1.5 font-medium text-blue-800 hover:bg-blue-900/20 transition-colors"
                 >
                   <ExternalLink className="h-3 w-3" />
-                  Fiche Wikipedia
+                  Fiche Wikipédia
                 </a>
               )}
             </div>

@@ -63,6 +63,17 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
     }
   }
 
+  const frWikiTitle = entity.sitelinks?.frwiki?.title;
+  const enWikiTitle = entity.sitelinks?.enwiki?.title;
+  let wikipediaUrl = null;
+  if (frWikiTitle) {
+    wikipediaUrl = `https://fr.wikipedia.org/wiki/${encodeURIComponent(frWikiTitle.replace(/ /g, '_'))}`;
+  } else if (enWikiTitle) {
+    wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(enWikiTitle.replace(/ /g, '_'))}`;
+  } else {
+    wikipediaUrl = `https://fr.wikipedia.org/w/index.php?search=${encodeURIComponent(labelFr)}`;
+  }
+
   return {
     fullname: labelFr,
     label: labelFr,
@@ -78,7 +89,7 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
     political_party: { id: partyQid, name: partyQid ? 'Parti officiel' : 'Indépendant' },
     position_held: { id: positionQid, name: descFr },
     photo_url: photoUrl,
-    source_url: entity.sitelinks?.frwiki?.url || `https://www.wikidata.org/wiki/${qid}`,
+    source_url: wikipediaUrl,
     wikidata_url: `https://www.wikidata.org/wiki/${qid}`,
     enrichedAt: new Date().toISOString()
   };
