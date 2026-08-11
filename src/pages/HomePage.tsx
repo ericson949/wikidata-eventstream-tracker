@@ -2,37 +2,28 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import PublicNavbar from '@/components/public/PublicNavbar';
 import PoliticianCard from '@/components/public/PoliticianCard';
+import PoliticianDetailModal from '@/components/public/PoliticianDetailModal';
 import InputSelect from '@/components/ui/InputSelect';
 import { Button } from '@/components/ui/button';
 import { Search, X } from 'lucide-react';
-import { Politician, Country } from '@/types';
+import { usePoliticiansData } from '@/hooks/usePoliticiansData';
 
-interface HomePageProps {
-  loading: boolean;
-  activePresidents: Politician[];
-  formerPresidents: Politician[];
-  filteredPublicPoliticians: Politician[];
-  countries: Country[];
-  publicSearch: string;
-  setPublicSearch: (v: string) => void;
-  publicCountry: string;
-  setPublicCountry: (v: string) => void;
-  onSelectPolitician: (p: Politician) => void;
-}
-
-export default function HomePage({
-  loading,
-  activePresidents,
-  formerPresidents,
-  filteredPublicPoliticians,
-  countries,
-  publicSearch,
-  setPublicSearch,
-  publicCountry,
-  setPublicCountry,
-  onSelectPolitician,
-}: HomePageProps) {
+export default function HomePage() {
   const navigate = useNavigate();
+  const {
+    loading,
+    countries,
+    publicSearch,
+    setPublicSearch,
+    publicCountry,
+    setPublicCountry,
+    selectedPolitician,
+    setSelectedPolitician,
+    updatePoliticianVotes,
+    activePresidents,
+    formerPresidents,
+    filteredPublicPoliticians,
+  } = usePoliticiansData();
 
   return (
     <div>
@@ -98,7 +89,7 @@ export default function HomePage({
 
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {activePresidents.slice(0, 5).map((p) => (
-                    <PoliticianCard key={p.id} politician={p} onSelect={onSelectPolitician} />
+                    <PoliticianCard key={p.id} politician={p} onSelect={setSelectedPolitician} />
                   ))}
                 </div>
 
@@ -130,7 +121,7 @@ export default function HomePage({
 
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {formerPresidents.slice(0, 5).map((p) => (
-                    <PoliticianCard key={p.id} politician={p} onSelect={onSelectPolitician} />
+                    <PoliticianCard key={p.id} politician={p} onSelect={setSelectedPolitician} />
                   ))}
                 </div>
 
@@ -149,6 +140,14 @@ export default function HomePage({
           </div>
         )}
       </main>
+
+      {selectedPolitician && (
+        <PoliticianDetailModal
+          politician={selectedPolitician}
+          onClose={() => setSelectedPolitician(null)}
+          onVoteSuccess={updatePoliticianVotes}
+        />
+      )}
     </div>
   );
 }

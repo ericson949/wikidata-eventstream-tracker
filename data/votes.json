@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": "0e00a8de-caa0-4ec5-9ff5-ebd482624937",
+    "politician_id": "Q57272",
+    "vote_type": "opinion",
+    "value": "hearts",
+    "question_id": null,
+    "fingerprint": "068311088ebbd2646b62321667cf8a857c8dd2e3bbb579aa24620a831dc3fd30",
+    "timestamp": "2026-08-11T16:16:31.441Z",
+    "age_range": "25-34",
+    "region": "cmr",
+    "gender": "M"
+  },
+  {
+    "id": "b53cdadb-a4bd-4548-950a-43e61fcd283b",
+    "politician_id": "Q124382437",
+    "vote_type": "opinion",
+    "value": "dislikes",
+    "question_id": null,
+    "fingerprint": "068311088ebbd2646b62321667cf8a857c8dd2e3bbb579aa24620a831dc3fd30",
+    "timestamp": "2026-08-11T16:27:17.700Z",
+    "age_range": null,
+    "region": null,
+    "gender": null
+  }
+]

@@ -3,36 +3,39 @@ import AdminNavbar from '@/components/admin/AdminNavbar';
 import PoliticiansTab from '@/components/admin/PoliticiansTab';
 import CountriesTab from '@/components/admin/CountriesTab';
 import SurveysTab from '@/components/admin/SurveysTab';
+import AddEntityModal from '@/components/admin/AddEntityModal';
+import SettingsModal from '@/components/admin/SettingsModal';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { UserCheck, Globe, BarChart3, ChevronDown } from 'lucide-react';
-import { Politician, Country } from '@/types';
+import { useAdminData } from '@/hooks/useAdminData';
 
-interface AdminPageProps {
-  politicians: Politician[];
-  countries: Country[];
-  onToggleStatus: (id: string, newStatus: string) => Promise<void>;
-  onDeletePolitician: (id: string) => Promise<void>;
-  onRefreshData: () => Promise<void>;
-  onOpenSettings: () => void;
-  onOpenAddModal: () => void;
-}
-
-export default function AdminPage({
-  politicians,
-  countries,
-  onToggleStatus,
-  onDeletePolitician,
-  onRefreshData,
-  onOpenSettings,
-  onOpenAddModal,
-}: AdminPageProps) {
+export default function AdminPage() {
   const [adminTab, setAdminTab] = useState<string>('politicians');
+
+  const {
+    politicians,
+    countries,
+    toastMsg,
+    isAddOpen,
+    setIsAddOpen,
+    isSettingsOpen,
+    setIsSettingsOpen,
+    loadData,
+    handleToggleStatus,
+    handleDeletePolitician,
+  } = useAdminData();
 
   return (
     <div>
+      {toastMsg && (
+        <div className="fixed bottom-5 right-5 z-50 rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-xl animate-in fade-in slide-in-from-bottom-5">
+          {toastMsg}
+        </div>
+      )}
+
       <AdminNavbar
-        onOpenSettings={onOpenSettings}
-        onOpenAddModal={onOpenAddModal}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenAddModal={() => setIsAddOpen(true)}
       />
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
@@ -71,14 +74,14 @@ export default function AdminPage({
             <PoliticiansTab
               politicians={politicians}
               countries={countries}
-              onToggleStatus={onToggleStatus}
-              onDeletePolitician={onDeletePolitician}
-              onRefreshData={onRefreshData}
+              onToggleStatus={handleToggleStatus}
+              onDeletePolitician={handleDeletePolitician}
+              onRefreshData={loadData}
             />
           </TabsContent>
 
           <TabsContent value="countries" className="mt-0 outline-none">
-            <CountriesTab countries={countries} onRefresh={onRefreshData} />
+            <CountriesTab countries={countries} onRefresh={loadData} />
           </TabsContent>
 
           <TabsContent value="surveys" className="mt-0 outline-none">
@@ -86,6 +89,18 @@ export default function AdminPage({
           </TabsContent>
         </Tabs>
       </main>
+
+      <AddEntityModal
+        isOpen={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
+        onAdded={loadData}
+        countries={countries}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   );
 }

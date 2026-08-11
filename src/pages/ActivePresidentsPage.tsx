@@ -2,43 +2,32 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import PublicNavbar from '@/components/public/PublicNavbar';
 import PoliticianCard from '@/components/public/PoliticianCard';
+import PoliticianDetailModal from '@/components/public/PoliticianDetailModal';
 import InputSelect from '@/components/ui/InputSelect';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, X, ArrowLeft } from 'lucide-react';
-import { Politician, Country } from '@/types';
 import PaginationControls from '@/components/ui/PaginationControls';
+import { usePoliticiansData } from '@/hooks/usePoliticiansData';
 
-interface ActivePresidentsPageProps {
-  loading: boolean;
-  activePresidents: Politician[];
-  countries: Country[];
-  publicSearch: string;
-  setPublicSearch: (v: string) => void;
-  publicCountry: string;
-  setPublicCountry: (v: string) => void;
-  publicPage: number;
-  setPublicPage: (p: number) => void;
-  publicPageSize: number;
-  setPublicPageSize: (s: number) => void;
-  onSelectPolitician: (p: Politician) => void;
-}
-
-export default function ActivePresidentsPage({
-  loading,
-  activePresidents,
-  countries,
-  publicSearch,
-  setPublicSearch,
-  publicCountry,
-  setPublicCountry,
-  publicPage,
-  setPublicPage,
-  publicPageSize,
-  setPublicPageSize,
-  onSelectPolitician,
-}: ActivePresidentsPageProps) {
+export default function ActivePresidentsPage() {
   const navigate = useNavigate();
+  const {
+    loading,
+    countries,
+    publicSearch,
+    setPublicSearch,
+    publicCountry,
+    setPublicCountry,
+    publicPage,
+    setPublicPage,
+    publicPageSize,
+    setPublicPageSize,
+    selectedPolitician,
+    setSelectedPolitician,
+    updatePoliticianVotes,
+    activePresidents,
+  } = usePoliticiansData();
 
   return (
     <div>
@@ -104,7 +93,7 @@ export default function ActivePresidentsPage({
               {activePresidents
                 .slice((publicPage - 1) * publicPageSize, publicPage * publicPageSize)
                 .map((p) => (
-                  <PoliticianCard key={p.id} politician={p} onSelect={onSelectPolitician} />
+                  <PoliticianCard key={p.id} politician={p} onSelect={setSelectedPolitician} />
                 ))}
             </div>
 
@@ -120,6 +109,14 @@ export default function ActivePresidentsPage({
           </div>
         )}
       </main>
+
+      {selectedPolitician && (
+        <PoliticianDetailModal
+          politician={selectedPolitician}
+          onClose={() => setSelectedPolitician(null)}
+          onVoteSuccess={updatePoliticianVotes}
+        />
+      )}
     </div>
   );
 }

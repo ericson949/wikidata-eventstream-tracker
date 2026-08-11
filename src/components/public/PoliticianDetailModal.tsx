@@ -137,9 +137,10 @@ function DemographicModal({ onSubmit, onSkip }: { onSubmit: (data: DemographicDa
 interface Props {
   politician: Politician | null;
   onClose: () => void;
+  onVoteSuccess?: (id: string, votes: any) => void;
 }
 
-export default function PoliticianDetailModal({ politician, onClose }: Props) {
+export default function PoliticianDetailModal({ politician, onClose, onVoteSuccess }: Props) {
   const [voteData, setVoteData] = useState<PoliticianVoteData | null>(null);
   const [question, setQuestion] = useState<Question | null>(null);
   const [loadingVotes, setLoadingVotes] = useState(true);
@@ -196,6 +197,15 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
     }
   }, [question, politician]);
 
+  useEffect(() => {
+    if (politician) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [politician]);
+
   if (!politician) return null;
 
   const opinionTotal = (voteData?.opinion?.hearts || 0) + (voteData?.opinion?.likes || 0) + (voteData?.opinion?.dislikes || 0) + (voteData?.opinion?.horrors || 0);
@@ -224,7 +234,12 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
         setLocalVoted(politician.id, key);
         if (voteType === 'opinion') setHasVotedOpinion(true);
         else setHasVotedQuestion(true);
-        if (res.data.stats) setVoteData(res.data.stats);
+        if (res.data.stats) {
+          setVoteData(res.data.stats);
+          if (voteType === 'opinion' && res.data.stats.opinion && onVoteSuccess) {
+            onVoteSuccess(politician.id, res.data.stats.opinion);
+          }
+        }
       } else if (res.data.already_voted) {
         setFeedback({ type: 'error', msg: '⚠️ Vous avez déjà voté.' });
       }
@@ -290,8 +305,8 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
   return (
     <>
       {/* Overlay */}
-      <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-4 py-8">
-        <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-3 sm:p-6">
+        <div className="relative flex flex-col w-full max-w-2xl max-h-[90vh] rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95">
 
           {/* Close Button */}
           <button
@@ -342,8 +357,8 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
             </div>
           </div>
 
-          {/* Content */}
-          <div className="p-6 space-y-6">
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
             {/* Bio */}
             <div className="flex flex-wrap gap-3 text-xs text-slate-500">
