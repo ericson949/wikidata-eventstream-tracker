@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import axios from 'axios';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { dbRead, dbWrite } from './_db.js';
 import { fetchAndEnrichFromWikidata } from './tracked.js';
 

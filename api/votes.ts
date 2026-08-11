@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { dbRead, dbWrite } from './_db.js';
 
 type ApiReq = IncomingMessage & {
