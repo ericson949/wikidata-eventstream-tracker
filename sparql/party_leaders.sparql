@@ -1,0 +1,7 @@
+# Chefs de parti politique africains
+SELECT DISTINCT ?person WHERE {
+  ?country wdt:P30 wd:Q15 .
+  ?person wdt:P27 ?country .
+  ?person wdt:P39 wd:Q1553195 .
+  FILTER NOT EXISTS { ?person wdt:P570 [] }
+}

@@ -137,9 +137,10 @@ function DemographicModal({ onSubmit, onSkip }: { onSubmit: (data: DemographicDa
 interface Props {
   politician: Politician | null;
   onClose: () => void;
+  onVoteSuccess?: (id: string, votes: any) => void;
 }
 
-export default function PoliticianDetailModal({ politician, onClose }: Props) {
+export default function PoliticianDetailModal({ politician, onClose, onVoteSuccess }: Props) {
   const [voteData, setVoteData] = useState<PoliticianVoteData | null>(null);
   const [question, setQuestion] = useState<Question | null>(null);
   const [loadingVotes, setLoadingVotes] = useState(true);
@@ -196,6 +197,15 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
     }
   }, [question, politician]);
 
+  useEffect(() => {
+    if (politician) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [politician]);
+
   if (!politician) return null;
 
   const opinionTotal = (voteData?.opinion?.hearts || 0) + (voteData?.opinion?.likes || 0) + (voteData?.opinion?.dislikes || 0) + (voteData?.opinion?.horrors || 0);
@@ -224,7 +234,12 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
         setLocalVoted(politician.id, key);
         if (voteType === 'opinion') setHasVotedOpinion(true);
         else setHasVotedQuestion(true);
-        if (res.data.stats) setVoteData(res.data.stats);
+        if (res.data.stats) {
+          setVoteData(res.data.stats);
+          if (voteType === 'opinion' && res.data.stats.opinion && onVoteSuccess) {
+            onVoteSuccess(politician.id, res.data.stats.opinion);
+          }
+        }
       } else if (res.data.already_voted) {
         setFeedback({ type: 'error', msg: '⚠️ Vous avez déjà voté.' });
       }
@@ -290,8 +305,8 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
   return (
     <>
       {/* Overlay */}
-      <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-4 py-8">
-        <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-3 sm:p-6">
+        <div className="relative flex flex-col w-full max-w-2xl max-h-[90vh] rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95">
 
           {/* Close Button */}
           <button
@@ -302,21 +317,21 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
           </button>
 
           {/* Hero Header */}
-          <div className="relative h-48 bg-gradient-to-br from-blue-950 via-slate-900 to-indigo-950 overflow-hidden">
+          <div className="relative h-48 sm:h-56 bg-gradient-to-br from-blue-950 via-slate-900 to-indigo-950 overflow-hidden">
             {politician.photo_url && (
               <img
                 src={politician.photo_url}
                 alt={politician.fullname}
-                className="absolute inset-0 h-full w-full object-cover object-[center_65%] opacity-30"
+                className="absolute inset-0 h-full w-full object-cover object-[center_15%] opacity-35"
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-900/60 to-transparent" />
             <div className="absolute bottom-4 sm:bottom-5 left-4 right-4 sm:left-6 sm:right-6 flex items-end gap-3 sm:gap-4">
               {politician.photo_url ? (
                 <img
                   src={politician.photo_url}
                   alt={politician.fullname}
-                  className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl object-cover object-[center_65%] border-2 border-white/20 shadow-lg shrink-0"
+                  className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl object-cover object-[center_15%] border-2 border-white/20 shadow-lg shrink-0"
                 />
               ) : (
                 <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl bg-white/10 border-2 border-white/20 flex items-center justify-center font-serif text-2xl sm:text-3xl font-bold text-white shrink-0">
@@ -342,8 +357,8 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
             </div>
           </div>
 
-          {/* Content */}
-          <div className="p-6 space-y-6">
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
             {/* Bio */}
             <div className="flex flex-wrap gap-3 text-xs text-slate-500">
@@ -364,15 +379,19 @@ export default function PoliticianDetailModal({ politician, onClose }: Props) {
                   {politician.birth_date}
                 </span>
               )}
-              {politician.source_url && (
+              {(politician.source_url || politician.fullname) && (
                 <a
-                  href={politician.source_url}
+                  href={
+                    politician.source_url && !politician.source_url.includes('wikidata.org')
+                      ? politician.source_url
+                      : `https://fr.wikipedia.org/wiki/${encodeURIComponent((politician.fullname || politician.id).replace(/ /g, '_'))}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 rounded-full bg-blue-900/10 px-3 py-1.5 font-medium text-blue-800 hover:bg-blue-900/20 transition-colors"
                 >
                   <ExternalLink className="h-3 w-3" />
-                  Fiche Wikipedia
+                  Fiche Wikipédia
                 </a>
               )}
             </div>

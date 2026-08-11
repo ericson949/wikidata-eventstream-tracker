@@ -1,0 +1,7 @@
+# Politiciens généraux africains (Partie 1 - Ouest & Centrale)
+SELECT DISTINCT ?person WHERE {
+  VALUES ?country { {{COUNTRIES_PART1}} }
+  ?person wdt:P27 ?country .
+  ?person wdt:P106 wd:Q82955 .
+  FILTER NOT EXISTS { ?person wdt:P570 [] }
+}

@@ -1,0 +1,18 @@
+# Premiers ministres réels des pays d'Afrique
+SELECT DISTINCT ?person WHERE {
+  VALUES ?country { {{COUNTRIES}} }
+  
+  # 1. Chefs de gouvernement actuels (P6)
+  { ?country wdt:P6 ?person . }
+  UNION
+  # 2. Titulaires de postes officiels de Premiers ministres africains
+  {
+    ?person wdt:P27 ?country .
+    ?person wdt:P39 ?office .
+    VALUES ?office {
+      wd:Q1006876 wd:Q14212 wd:Q19116035 wd:Q19125298 wd:Q19158915
+    }
+  }
+
+  FILTER NOT EXISTS { ?person wdt:P570 [] }
+}

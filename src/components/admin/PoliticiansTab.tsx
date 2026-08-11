@@ -5,9 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, X, Trash2, ExternalLink, RefreshCw } from 'lucide-react';
+import { Search, X, Trash2, ExternalLink, RefreshCw, Vote } from 'lucide-react';
 import InputSelect from '@/components/ui/InputSelect';
 import { Politician, Country } from '@/types';
+import ImportLeadersPanel from './ImportLeadersPanel';
+
+import PaginationControls from '@/components/ui/PaginationControls';
 
 interface PoliticiansTabProps {
   politicians: Politician[];
@@ -28,6 +31,10 @@ export default function PoliticiansTab({
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
   const filteredPoliticians = politicians.filter(p => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch = !q ||
@@ -42,6 +49,14 @@ export default function PoliticiansTab({
     return matchesSearch && matchesCountry && matchesStatus;
   });
 
+  // Reset to page 1 on filter/search change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCountry, selectedStatus]);
+
+  const totalPages = Math.ceil(filteredPoliticians.length / pageSize) || 1;
+  const paginatedPoliticians = filteredPoliticians.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   const totalCount = politicians.length;
   const activeCount = politicians.filter(p => p.status === 'Activé').length;
   const disabledCount = politicians.filter(p => p.status === 'Désactivé').length;
@@ -49,6 +64,9 @@ export default function PoliticiansTab({
 
   return (
     <div className="space-y-6">
+      {/* Import automatique Wikidata */}
+      <ImportLeadersPanel onImportDone={onRefreshData} />
+
       {/* Stats Cards Row */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Card className="border-slate-200">
@@ -137,109 +155,193 @@ export default function PoliticiansTab({
         </div>
       </div>
 
-      {/* Politicians Table */}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Politicien / Dirigeant</TableHead>
-            <TableHead>Identifiant Wikidata</TableHead>
-            <TableHead>Fonction Officielle</TableHead>
-            <TableHead>Pays</TableHead>
-            <TableHead>Statut Publication</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredPoliticians.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="h-32 text-center text-slate-500">
-                Aucun politicien trouvé pour cette recherche.
-              </TableCell>
-            </TableRow>
-          ) : (
-            filteredPoliticians.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    {p.photo_url ? (
-                      <img src={p.photo_url} alt={p.fullname} className="h-10 w-10 rounded-full object-cover border border-slate-200" />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-600 border border-slate-200">
-                        {p.fullname.charAt(0)}
-                      </div>
-                    )}
-                    <div>
-                      <div className="font-semibold text-slate-900">{p.fullname}</div>
-                      <div className="text-xs text-slate-500">{p.political_party?.name || 'Indépendant'}</div>
+      {/* Empty State */}
+      {filteredPoliticians.length === 0 && (
+        <Card className="p-8 text-center text-slate-500">
+          Aucun politicien trouvé pour cette recherche.
+        </Card>
+      )}
+
+      {/* ── Mobile View: Cards Grid (< md) ── */}
+      {filteredPoliticians.length > 0 && (
+        <div className="grid grid-cols-1 gap-4 md:hidden">
+          {paginatedPoliticians.map((p) => (
+            <Card key={p.id} className="border-slate-200 p-4 shadow-sm space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  {p.photo_url ? (
+                    <img src={p.photo_url} alt={p.fullname} className="h-12 w-12 rounded-full object-cover border border-slate-200 shrink-0" />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-600 border border-slate-200 shrink-0 text-base">
+                      {p.fullname.charAt(0)}
                     </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="font-bold text-slate-900 text-sm truncate">{p.fullname}</div>
+                    <div className="text-xs text-slate-500 truncate">{p.political_party?.name || 'Indépendant'}</div>
+                    <div className="text-[11px] font-medium text-slate-600 mt-0.5">{p.country?.name || 'Afrique'}</div>
                   </div>
-                </TableCell>
+                </div>
 
-                <TableCell>
-                  <code className="rounded bg-slate-100 px-2 py-1 text-xs font-mono text-slate-800">{p.id}</code>
-                </TableCell>
+                <code className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-mono text-slate-700 shrink-0">
+                  {p.id}
+                </code>
+              </div>
 
-                <TableCell className="max-w-xs truncate text-slate-600 text-xs font-medium">
-                  {p.job_title || p.biography || 'Dirigeant Politique'}
-                </TableCell>
+              <div className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100 font-medium">
+                {p.job_title || p.biography || 'Dirigeant Politique'}
+              </div>
 
-                <TableCell className="font-medium text-slate-800 text-sm">
-                  {p.country?.name || 'Afrique'}
-                </TableCell>
+              <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                <button
+                  onClick={() => onToggleStatus(p.id, p.status === 'Activé' ? 'Désactivé' : 'Activé')}
+                  className="focus:outline-none"
+                >
+                  <Badge variant={p.status === 'Activé' ? 'success' : 'destructive'} className="cursor-pointer text-xs">
+                    {p.status === 'Activé' ? 'Activé (Publié)' : 'Désactivé (Masqué)'}
+                  </Badge>
+                </button>
 
-                <TableCell>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => onToggleStatus(p.id, p.status === 'Activé' ? 'Désactivé' : 'Activé')}
-                        className="focus:outline-none"
-                      >
-                        <Badge variant={p.status === 'Activé' ? 'success' : 'destructive'} className="cursor-pointer">
-                          {p.status === 'Activé' ? 'Activé (Publié)' : 'Désactivé (Masqué)'}
-                        </Badge>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      {p.status === 'Activé' ? 'Cliquer pour masquer cette fiche' : 'Cliquer pour publier cette fiche'}
-                    </TooltipContent>
-                  </Tooltip>
-                </TableCell>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => window.open(`https://www.wikidata.org/wiki/${p.id}`, '_blank')}
+                    className="h-8 px-2 text-slate-500"
+                    title="Ouvrir sur Wikidata"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-1" />
+                    <span className="text-xs">Wikidata</span>
+                  </Button>
 
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => window.open(`https://www.wikidata.org/wiki/${p.id}`, '_blank')}
-                        >
-                          <ExternalLink className="h-4 w-4 text-slate-500" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">Ouvrir sur Wikidata</TooltipContent>
-                    </Tooltip>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onDeletePolitician(p.id)}
+                    className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-700"
+                    title="Supprimer la fiche"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onDeletePolitician(p.id)}
-                          className="text-red-500 hover:bg-red-50 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">Supprimer la fiche</TooltipContent>
-                    </Tooltip>
-                  </div>
-                </TableCell>
+      {/* ── Desktop View: Table (>= md) ── */}
+      {filteredPoliticians.length > 0 && (
+        <div className="hidden md:block overflow-x-auto rounded-lg border border-slate-200">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Politicien / Dirigeant</TableHead>
+                <TableHead>Identifiant Wikidata</TableHead>
+                <TableHead>Fonction Officielle</TableHead>
+                <TableHead>Pays</TableHead>
+                <TableHead>Statut Publication</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            </TableHeader>
+            <TableBody>
+              {paginatedPoliticians.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      {p.photo_url ? (
+                        <img src={p.photo_url} alt={p.fullname} className="h-10 w-10 rounded-full object-cover border border-slate-200" />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-600 border border-slate-200">
+                          {p.fullname.charAt(0)}
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-semibold text-slate-900">{p.fullname}</div>
+                        <div className="text-xs text-slate-500">{p.political_party?.name || 'Indépendant'}</div>
+                      </div>
+                    </div>
+                  </TableCell>
+
+                  <TableCell>
+                    <code className="rounded bg-slate-100 px-2 py-1 text-xs font-mono text-slate-800">{p.id}</code>
+                  </TableCell>
+
+                  <TableCell className="max-w-xs truncate text-slate-600 text-xs font-medium">
+                    {p.job_title || p.biography || 'Dirigeant Politique'}
+                  </TableCell>
+
+                  <TableCell className="font-medium text-slate-800 text-sm">
+                    {p.country?.name || 'Afrique'}
+                  </TableCell>
+
+                  <TableCell>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => onToggleStatus(p.id, p.status === 'Activé' ? 'Désactivé' : 'Activé')}
+                          className="focus:outline-none"
+                        >
+                          <Badge variant={p.status === 'Activé' ? 'success' : 'destructive'} className="cursor-pointer">
+                            {p.status === 'Activé' ? 'Activé (Publié)' : 'Désactivé (Masqué)'}
+                          </Badge>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        {p.status === 'Activé' ? 'Cliquer pour masquer cette fiche' : 'Cliquer pour publier cette fiche'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableCell>
+
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => window.open(`https://www.wikidata.org/wiki/${p.id}`, '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4 text-slate-500" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">Ouvrir sur Wikidata</TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onDeletePolitician(p.id)}
+                            className="text-red-500 hover:bg-red-50 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">Supprimer la fiche</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Pagination Controls Bottom */}
+      {filteredPoliticians.length > 0 && (
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filteredPoliticians.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[15, 30, 50, 100]}
+        />
+      )}
     </div>
   );
 }

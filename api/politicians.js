@@ -64,7 +64,18 @@ export default async function handler(req, res) {
       block2_enabled:   item.block2_enabled !== false,
       votes:            getRealVoteStats(votesList, item.id)
     }));
-    results.sort((a, b) => a.fullname.localeCompare(b.fullname, 'fr', { sensitivity: 'base' }));
+    if (!isAdmin) {
+      results.sort((a, b) => {
+        const totalVotesA = (a.votes.hearts || 0) + (a.votes.likes || 0) + (a.votes.dislikes || 0) + (a.votes.horrors || 0);
+        const totalVotesB = (b.votes.hearts || 0) + (b.votes.likes || 0) + (b.votes.dislikes || 0) + (b.votes.horrors || 0);
+        if (totalVotesB !== totalVotesA) {
+          return totalVotesB - totalVotesA; // Nombre de votes décroissant
+        }
+        return a.fullname.localeCompare(b.fullname, 'fr', { sensitivity: 'base' });
+      });
+    } else {
+      results.sort((a, b) => a.fullname.localeCompare(b.fullname, 'fr', { sensitivity: 'base' }));
+    }
 
     return res.status(200).json({ success: true, data: results });
   } catch (err) {

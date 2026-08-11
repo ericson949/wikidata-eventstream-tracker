@@ -14,13 +14,9 @@ countries.forEach(c => {
 console.log(`Enrichissement de ${items.length} politiciens depuis Wikidata (parallele)...`);
 
 const results = await Promise.all(items.map(async (item) => {
-  if (item.enrichedAt) {
-    console.log(`  [SKIP] ${item.id} deja enrichi`);
-    return item;
-  }
   try {
     const enriched = await fetchAndEnrichFromWikidata(item.id, countriesMap);
-    console.log(`  [OK]   ${item.id} => ${enriched.fullname}`);
+    console.log(`  [OK]   ${item.id} => ${enriched.fullname} | Wiki: ${enriched.source_url}`);
     return {
       id: item.id,
       ...enriched,

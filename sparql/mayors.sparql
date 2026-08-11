@@ -1,0 +1,7 @@
+# Maires africains
+SELECT DISTINCT ?person WHERE {
+  VALUES ?country { {{COUNTRIES}} }
+  ?person wdt:P27 ?country .
+  ?person wdt:P39 wd:Q30185 .
+  FILTER NOT EXISTS { ?person wdt:P570 [] }
+}

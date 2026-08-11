@@ -21,12 +21,27 @@ async function getCountriesMap() {
   return map;
 }
 
+// ─── HTTP GET avec Retry automatique sur 429 / 503 (Rate Limit) ───────────────
+async function fetchWithRetry(url, options = {}, retries = 4, backoff = 2000) {
+  try {
+    return await axios.get(url, options);
+  } catch (error) {
+    const status = error.response?.status;
+    if ((status === 429 || status === 503 || error.code === 'ECONNRESET') && retries > 0) {
+      console.warn(`  ⚠️ Wikidata Rate Limit (${status || error.code}). Pause de ${backoff}ms avant retry (${retries} restant(s))...`);
+      await new Promise(r => setTimeout(r, backoff));
+      return fetchWithRetry(url, options, retries - 1, backoff * 2);
+    }
+    throw error;
+  }
+}
+
 // ─── Fetch + enrich depuis Wikidata ──────────────────────────────────────────
 export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
   const url = `https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`;
-  const res = await axios.get(url, {
+  const res = await fetchWithRetry(url, {
     headers: { 'User-Agent': 'PolitiliBot/2.0 (politili.com)' },
-    timeout: 8000
+    timeout: 12000
   });
   const entity = res.data?.entities?.[qid];
   if (!entity) throw new Error(`Entité ${qid} introuvable sur Wikidata`);
@@ -34,36 +49,84 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
   const getClaimVal = (pId) => entity.claims?.[pId]?.[0]?.mainsnak?.datavalue?.value?.id || null;
   const getClaimStr = (pId) => entity.claims?.[pId]?.[0]?.mainsnak?.datavalue?.value || null;
 
+  // ── Labels bilingues ─────────────────────────────────────────────────────
   const labelFr = entity.labels?.fr?.value || entity.labels?.en?.value || qid;
+  const labelEn = entity.labels?.en?.value || entity.labels?.fr?.value || qid;
+
   const descFr = entity.descriptions?.fr?.value || entity.descriptions?.en?.value || 'Homme d\'État (Afrique)';
+  const descEn = entity.descriptions?.en?.value || entity.descriptions?.fr?.value || 'African Head of State';
 
   const countryQid = getClaimVal('P27') || getClaimVal('P17');
   const partyQid = getClaimVal('P102');
   const positionQid = getClaimVal('P39');
   const birthStr = getClaimStr('P569')?.time ? getClaimStr('P569').time.substring(1, 11) : null;
   const deathStr = getClaimStr('P570')?.time ? getClaimStr('P570').time.substring(1, 11) : null;
+
+  // ── Analyse de la fin du dernier poste politique (P39 -> qualifiers P582) ──
+  let latestEndTimeYear = null;
+  let hasExplicitEndTime = false;
+  const p39Claims = entity.claims?.P39 || [];
+  for (const claim of p39Claims) {
+    const endTimeStr = claim.qualifiers?.P582?.[0]?.datavalue?.value?.time;
+    if (endTimeStr) {
+      hasExplicitEndTime = true;
+      const year = parseInt(endTimeStr.substring(1, 5), 10);
+      if (!isNaN(year) && (latestEndTimeYear === null || year > latestEndTimeYear)) {
+        latestEndTimeYear = year;
+      }
+    }
+  }
+
+  const descLower = (descFr + ' ' + descEn).toLowerCase();
+  const isFormerByText = descLower.includes('ancien') || descLower.includes('former') || descLower.includes('ex-');
+  const isCurrentlyActive = !hasExplicitEndTime && !isFormerByText && !deathStr;
+
+  const currentYear = new Date().getFullYear();
+  const cutoffYear = currentYear - 20; // ex: 2026 - 20 = 2006
+  const isOlderThan20Years = latestEndTimeYear !== null && latestEndTimeYear < cutoffYear;
+
   const imageFilename = getClaimStr('P18');
   const photoUrl = imageFilename
     ? `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(imageFilename)}`
     : null;
 
+  // ── Pays (nom FR + EN) ───────────────────────────────────────────────────
   let countryName = 'Afrique';
+  let countryNameEn = 'Africa';
   if (countryQid) {
     const cleanQid = countryQid.toUpperCase();
     if (countriesMap && countriesMap[cleanQid]) {
       countryName = countriesMap[cleanQid];
+      countryNameEn = countriesMap[cleanQid]; // la map n'a que FR pour l'instant
     } else {
       try {
-        const cRes = await axios.get(`https://www.wikidata.org/wiki/Special:EntityData/${countryQid}.json`, {
-          headers: { 'User-Agent': 'PolitiliBot/2.0' }, timeout: 4000
+        const cRes = await fetchWithRetry(`https://www.wikidata.org/wiki/Special:EntityData/${countryQid}.json`, {
+          headers: { 'User-Agent': 'PolitiliBot/2.0' }, timeout: 6000
         });
         const cEntity = cRes.data?.entities?.[countryQid];
         countryName = cEntity?.labels?.fr?.value || cEntity?.labels?.en?.value || 'Afrique';
+        countryNameEn = cEntity?.labels?.en?.value || cEntity?.labels?.fr?.value || 'Africa';
       } catch (e) {}
     }
   }
 
+  // ── URLs Wikipedia FR + EN ───────────────────────────────────────────────
+  const frWikiTitle = entity.sitelinks?.frwiki?.title;
+  const enWikiTitle = entity.sitelinks?.enwiki?.title;
+
+  const wikipediaFr = frWikiTitle
+    ? `https://fr.wikipedia.org/wiki/${encodeURIComponent(frWikiTitle.replace(/ /g, '_'))}`
+    : `https://fr.wikipedia.org/w/index.php?search=${encodeURIComponent(labelFr)}`;
+
+  const wikipediaEn = enWikiTitle
+    ? `https://en.wikipedia.org/wiki/${encodeURIComponent(enWikiTitle.replace(/ /g, '_'))}`
+    : `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(labelEn)}`;
+
+  // source_url = Wikipedia FR en priorité, EN en fallback
+  const wikipediaUrl = frWikiTitle ? wikipediaFr : (enWikiTitle ? wikipediaEn : wikipediaFr);
+
   return {
+    // ── Champs principaux (FR par défaut pour l'UI) ──────────────────────
     fullname: labelFr,
     label: labelFr,
     first_name: labelFr.split(' ')[0] || labelFr,
@@ -71,14 +134,34 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
     job_title: descFr,
     biography: descFr,
     description: descFr,
+    // ── Données bilingues ────────────────────────────────────────────────
+    i18n: {
+      fr: {
+        label: labelFr,
+        description: descFr,
+        wikipedia: wikipediaFr,
+      },
+      en: {
+        label: labelEn,
+        description: descEn,
+        wikipedia: wikipediaEn,
+      },
+    },
+    // ── Dates & état ────────────────────────────────────────────────────
     birth_date: birthStr,
     death_date: deathStr,
-    actor_state: deathStr ? 'Décédé' : 'En exercice',
-    country: { id: countryQid, name: countryName },
+    actor_state: deathStr ? 'Décédé' : (isCurrentlyActive ? 'En exercice' : 'Ancien'),
+    latest_end_year: latestEndTimeYear,
+    is_older_than_20_years: isOlderThan20Years,
+    // ── Entités liées ────────────────────────────────────────────────────
+    country: { id: countryQid, name: countryName, name_en: countryNameEn },
     political_party: { id: partyQid, name: partyQid ? 'Parti officiel' : 'Indépendant' },
-    position_held: { id: positionQid, name: descFr },
+    position_held: { id: positionQid, name: descFr, name_en: descEn },
+    // ── URLs ─────────────────────────────────────────────────────────────
     photo_url: photoUrl,
-    source_url: entity.sitelinks?.frwiki?.url || `https://www.wikidata.org/wiki/${qid}`,
+    source_url: wikipediaUrl,
+    wikipedia_fr: wikipediaFr,
+    wikipedia_en: wikipediaEn,
     wikidata_url: `https://www.wikidata.org/wiki/${qid}`,
     enrichedAt: new Date().toISOString()
   };
