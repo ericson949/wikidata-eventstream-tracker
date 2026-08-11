@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Search, X, Trash2, ExternalLink, RefreshCw, Vote } from 'lucide-react';
 import InputSelect from '@/components/ui/InputSelect';
 import { Politician, Country } from '@/types';
+import ImportLeadersPanel from './ImportLeadersPanel';
 
 interface PoliticiansTabProps {
   politicians: Politician[];
@@ -49,6 +50,9 @@ export default function PoliticiansTab({
 
   return (
     <div className="space-y-6">
+      {/* Import automatique Wikidata */}
+      <ImportLeadersPanel onImportDone={onRefreshData} />
+
       {/* Stats Cards Row */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Card className="border-slate-200">

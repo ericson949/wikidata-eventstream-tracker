@@ -14,6 +14,7 @@ import votesHandler from './api/votes.js';
 import trackedHandler from './api/tracked.js';
 import countriesHandler from './api/countries.js';
 import questionsHandler from './api/questions.js';
+import importLeadersHandler from './api/import-leaders.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,6 +67,9 @@ app.put('/api/tracked/:id', (req, res) => {
 app.get('/api/search', (req, res) => searchHandler(req, res));
 app.post('/api/admin/login', (req, res) => loginHandler(req, res));
 app.get('/api/admin/check', (req, res) => checkHandler(req, res));
+
+// Import automatique Wikidata SPARQL
+app.post('/api/import-leaders', (req, res) => importLeadersHandler(req, res));
 
 // Legacy vote (kept for compatibility)
 app.post('/api/vote', (req, res) => voteHandler(req, res));

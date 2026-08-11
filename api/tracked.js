@@ -34,8 +34,12 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
   const getClaimVal = (pId) => entity.claims?.[pId]?.[0]?.mainsnak?.datavalue?.value?.id || null;
   const getClaimStr = (pId) => entity.claims?.[pId]?.[0]?.mainsnak?.datavalue?.value || null;
 
+  // ── Labels bilingues ─────────────────────────────────────────────────────
   const labelFr = entity.labels?.fr?.value || entity.labels?.en?.value || qid;
+  const labelEn = entity.labels?.en?.value || entity.labels?.fr?.value || qid;
+
   const descFr = entity.descriptions?.fr?.value || entity.descriptions?.en?.value || 'Homme d\'État (Afrique)';
+  const descEn = entity.descriptions?.en?.value || entity.descriptions?.fr?.value || 'African Head of State';
 
   const countryQid = getClaimVal('P27') || getClaimVal('P17');
   const partyQid = getClaimVal('P102');
@@ -47,11 +51,14 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
     ? `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(imageFilename)}`
     : null;
 
+  // ── Pays (nom FR + EN) ───────────────────────────────────────────────────
   let countryName = 'Afrique';
+  let countryNameEn = 'Africa';
   if (countryQid) {
     const cleanQid = countryQid.toUpperCase();
     if (countriesMap && countriesMap[cleanQid]) {
       countryName = countriesMap[cleanQid];
+      countryNameEn = countriesMap[cleanQid]; // la map n'a que FR pour l'instant
     } else {
       try {
         const cRes = await axios.get(`https://www.wikidata.org/wiki/Special:EntityData/${countryQid}.json`, {
@@ -59,22 +66,28 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
         });
         const cEntity = cRes.data?.entities?.[countryQid];
         countryName = cEntity?.labels?.fr?.value || cEntity?.labels?.en?.value || 'Afrique';
+        countryNameEn = cEntity?.labels?.en?.value || cEntity?.labels?.fr?.value || 'Africa';
       } catch (e) {}
     }
   }
 
+  // ── URLs Wikipedia FR + EN ───────────────────────────────────────────────
   const frWikiTitle = entity.sitelinks?.frwiki?.title;
   const enWikiTitle = entity.sitelinks?.enwiki?.title;
-  let wikipediaUrl = null;
-  if (frWikiTitle) {
-    wikipediaUrl = `https://fr.wikipedia.org/wiki/${encodeURIComponent(frWikiTitle.replace(/ /g, '_'))}`;
-  } else if (enWikiTitle) {
-    wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(enWikiTitle.replace(/ /g, '_'))}`;
-  } else {
-    wikipediaUrl = `https://fr.wikipedia.org/w/index.php?search=${encodeURIComponent(labelFr)}`;
-  }
+
+  const wikipediaFr = frWikiTitle
+    ? `https://fr.wikipedia.org/wiki/${encodeURIComponent(frWikiTitle.replace(/ /g, '_'))}`
+    : `https://fr.wikipedia.org/w/index.php?search=${encodeURIComponent(labelFr)}`;
+
+  const wikipediaEn = enWikiTitle
+    ? `https://en.wikipedia.org/wiki/${encodeURIComponent(enWikiTitle.replace(/ /g, '_'))}`
+    : `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(labelEn)}`;
+
+  // source_url = Wikipedia FR en priorité, EN en fallback
+  const wikipediaUrl = frWikiTitle ? wikipediaFr : (enWikiTitle ? wikipediaEn : wikipediaFr);
 
   return {
+    // ── Champs principaux (FR par défaut pour l'UI) ──────────────────────
     fullname: labelFr,
     label: labelFr,
     first_name: labelFr.split(' ')[0] || labelFr,
@@ -82,14 +95,32 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
     job_title: descFr,
     biography: descFr,
     description: descFr,
+    // ── Données bilingues ────────────────────────────────────────────────
+    i18n: {
+      fr: {
+        label: labelFr,
+        description: descFr,
+        wikipedia: wikipediaFr,
+      },
+      en: {
+        label: labelEn,
+        description: descEn,
+        wikipedia: wikipediaEn,
+      },
+    },
+    // ── Dates & état ────────────────────────────────────────────────────
     birth_date: birthStr,
     death_date: deathStr,
     actor_state: deathStr ? 'Décédé' : 'En exercice',
-    country: { id: countryQid, name: countryName },
+    // ── Entités liées ────────────────────────────────────────────────────
+    country: { id: countryQid, name: countryName, name_en: countryNameEn },
     political_party: { id: partyQid, name: partyQid ? 'Parti officiel' : 'Indépendant' },
-    position_held: { id: positionQid, name: descFr },
+    position_held: { id: positionQid, name: descFr, name_en: descEn },
+    // ── URLs ─────────────────────────────────────────────────────────────
     photo_url: photoUrl,
     source_url: wikipediaUrl,
+    wikipedia_fr: wikipediaFr,
+    wikipedia_en: wikipediaEn,
     wikidata_url: `https://www.wikidata.org/wiki/${qid}`,
     enrichedAt: new Date().toISOString()
   };
