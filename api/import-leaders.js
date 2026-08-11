@@ -89,7 +89,7 @@ export default async function handler(req, res) {
     const allCandidateQids = Array.from(collectedQidsSet);
 
     // 2. Charger les dirigeants existants dans africa_leaders.json
-    const existingLeaders = dbRead(KEY, FILE) || [];
+    const existingLeaders = (await dbRead(KEY, FILE)) || [];
     const existingQids = new Set(existingLeaders.map(l => (l.id || '').toUpperCase()));
 
     // Q-IDs qui restent à importer
@@ -111,7 +111,7 @@ export default async function handler(req, res) {
     const batchToImport = qidsToImport.slice(0, BATCH_LIMIT);
 
     // Map des pays pour le nom FR
-    const countriesList = dbRead('countries', 'countries.json') || [];
+    const countriesList = (await dbRead('countries', 'countries.json')) || [];
     const countriesMap = {};
     countriesList.forEach(c => {
       if (c.id) countriesMap[c.id.toUpperCase()] = `${c.flag ? c.flag + ' ' : ''}${c.name}`;
@@ -142,7 +142,7 @@ export default async function handler(req, res) {
     // Sauvegarder dans la BDD JSON
     if (newlyEnriched.length > 0) {
       const updatedList = [...existingLeaders, ...newlyEnriched];
-      dbWrite(KEY, FILE, updatedList);
+      await dbWrite(KEY, updatedList, FILE);
     }
 
     return res.status(200).json({
