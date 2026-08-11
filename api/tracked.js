@@ -64,13 +64,12 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
 
   // ── Analyse de la fin du dernier poste politique (P39 -> qualifiers P582) ──
   let latestEndTimeYear = null;
-  let hasActiveOffice = false;
+  let hasExplicitEndTime = false;
   const p39Claims = entity.claims?.P39 || [];
   for (const claim of p39Claims) {
     const endTimeStr = claim.qualifiers?.P582?.[0]?.datavalue?.value?.time;
-    if (!endTimeStr) {
-      hasActiveOffice = true; // Pas de date de fin = poste réputé en cours
-    } else {
+    if (endTimeStr) {
+      hasExplicitEndTime = true;
       const year = parseInt(endTimeStr.substring(1, 5), 10);
       if (!isNaN(year) && (latestEndTimeYear === null || year > latestEndTimeYear)) {
         latestEndTimeYear = year;
@@ -78,9 +77,13 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
     }
   }
 
+  const descLower = (descFr + ' ' + descEn).toLowerCase();
+  const isFormerByText = descLower.includes('ancien') || descLower.includes('former') || descLower.includes('ex-');
+  const isCurrentlyActive = !hasExplicitEndTime && !isFormerByText && !deathStr;
+
   const currentYear = new Date().getFullYear();
   const cutoffYear = currentYear - 20; // ex: 2026 - 20 = 2006
-  const isOlderThan20Years = !hasActiveOffice && latestEndTimeYear !== null && latestEndTimeYear < cutoffYear;
+  const isOlderThan20Years = latestEndTimeYear !== null && latestEndTimeYear < cutoffYear;
 
   const imageFilename = getClaimStr('P18');
   const photoUrl = imageFilename
@@ -147,7 +150,7 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
     // ── Dates & état ────────────────────────────────────────────────────
     birth_date: birthStr,
     death_date: deathStr,
-    actor_state: deathStr ? 'Décédé' : (isOlderThan20Years ? 'Ancien dirigeant' : 'En exercice'),
+    actor_state: deathStr ? 'Décédé' : (isCurrentlyActive ? 'En exercice' : 'Ancien'),
     latest_end_year: latestEndTimeYear,
     is_older_than_20_years: isOlderThan20Years,
     // ── Entités liées ────────────────────────────────────────────────────

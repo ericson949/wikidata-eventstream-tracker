@@ -1,4 +1,5 @@
 import { fetchAndEnrichFromWikidata } from '../api/tracked.js';
+import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 
@@ -7,7 +8,7 @@ import path from 'path';
 
 const IDS_FILE = './data/politician_ids.json';
 const OUTPUT_FILE = './data/africa_leaders.json';
-const COUNTRIES_FILE = './data/countries.json';
+const COUNTRIES_FILE = './data/african_countries.json';
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -33,6 +34,41 @@ async function main() {
   if (!fs.existsSync(IDS_FILE)) {
     console.error(`❌ Fichier ${IDS_FILE} introuvable ! Lancez d'abord "npm run collect:ids".`);
     process.exit(1);
+  }
+
+  // ── 0. Récupérer la liste exacte des Chefs d'État actuels (P35) d'Afrique ──
+  const activePresidentsSet = new Set();
+  let countryQids = [];
+  if (fs.existsSync(COUNTRIES_FILE)) {
+    try {
+      const countriesList = JSON.parse(fs.readFileSync(COUNTRIES_FILE, 'utf-8'));
+      countryQids = countriesList.map(c => `wd:${c.id}`);
+    } catch (e) {}
+  }
+
+  if (countryQids.length > 0) {
+    try {
+      console.log("🔍 Récupération des Chefs d'État (P35) actuellement en exercice...");
+      const sparql = `
+      SELECT DISTINCT ?country ?person WHERE {
+        VALUES ?country { ${countryQids.join(' ')} }
+        ?country wdt:P35 ?person .
+        FILTER NOT EXISTS { ?person wdt:P570 [] }
+      }`;
+      const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(sparql)}&format=json`;
+      const res = await axios.get(url, {
+        headers: { 'User-Agent': 'PolitiliBot/2.0', 'Accept': 'application/sparql-results+json' },
+        timeout: 15000
+      });
+      const bindings = res.data?.results?.bindings || [];
+      bindings.forEach(b => {
+        const qid = b.person?.value?.split('/').pop();
+        if (qid) activePresidentsSet.add(qid.toUpperCase());
+      });
+      console.log(`✅ ${activePresidentsSet.size} Chefs d'État en exercice identifiés.\n`);
+    } catch (err) {
+      console.warn("⚠️ Impossible de vérifier la liste des Chefs d'État en exercice:", err.message);
+    }
   }
 
   const rawData = JSON.parse(fs.readFileSync(IDS_FILE, 'utf-8'));
@@ -100,9 +136,14 @@ async function main() {
           console.log(`   ⏩ [IGNORÉ - Poste > 20 ans] ${qid} => ${enriched.fullname} (Fin: ${enriched.latest_end_year})`);
           return;
         }
+
+        const isCurrentlyActive = activePresidentsSet.has(qid.toUpperCase());
+        const calculatedState = enriched.death_date ? 'Décédé' : (isCurrentlyActive ? 'En exercice' : 'Ancien');
+
         const newItem = {
           id: qid,
           ...enriched,
+          actor_state: calculatedState,
           status: 'Activé',
           vote_enabled: true,
           block1_enabled: true,
@@ -112,7 +153,7 @@ async function main() {
         };
         existingMap.set(qid, newItem);
         countSuccess++;
-        console.log(`   ✓ [OK] ${qid} => ${enriched.fullname} (${enriched.country?.name || 'Afrique'})`);
+        console.log(`   ✓ [OK] ${qid} => ${enriched.fullname} (${calculatedState} | ${enriched.country?.name || 'Afrique'})`);
       } catch (err) {
         countError++;
         console.error(`   ❌ [ERR] ${qid} => ${err.message}`);

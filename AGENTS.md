@@ -27,3 +27,7 @@ Run **both** for frontend dev. Frontend changes need a `npm run build` before th
 - `.env` (gitignored) holds `PORT`, `ADMIN_USER`, `ADMIN_PASS`, `ADMIN_TOKEN`. Never commit real values.
 - `scripts/enrich-leaders.mjs` re-uses `fetchAndEnrichFromWikidata` from `api/tracked.js` and only processes items lacking `enrichedAt`; it's a one-shot bulk enrich script that hits live Wikidata.
 - `api/vote.js` (legacy) is a no-op ack; real voting persistence is `api/votes.js` with anti-fraud fingerprints.
+
+## Code Quality & File Limits
+
+- **Strict Line Count Limit**: Aucun fichier source (`src/`, `api/`, `scripts/`) ne doit dépasser **300 lignes de code**. Découper systématiquement les composants et modules en fichiers autonomes et modulaires.
