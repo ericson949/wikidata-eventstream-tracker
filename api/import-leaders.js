@@ -6,21 +6,21 @@ import { fetchAndEnrichFromWikidata } from './tracked.js';
 
 const KEY = 'africa_leaders';
 const FILE = 'africa_leaders.json';
-const IDS_FILE = 'politician_ids.json';
 const COUNTRIES_FILE = 'african_countries.json';
+const SPARQL_DIR = 'sparql';
 
-// Mapping des types frontend vers les clés du fichier politician_ids.json ou SPARQL
-const TYPE_MAPPING = {
-  president: ['presidents', 'president'],
-  prime_minister: ['prime_ministers', 'prime_minister'],
-  minister: ['ministers', 'minister'],
-  deputy: ['parliamentarians', 'deputy'],
-  senator: ['senators', 'senator'],
-  military: ['military'],
-  business: ['business'],
+// Map des choix de l'admin vers les fichiers SPARQL réels du projet
+const TYPE_TO_SPARQL_FILE = {
+  president: 'presidents.sparql',
+  prime_minister: 'prime_ministers.sparql',
+  minister: 'ministers.sparql',
+  deputy: 'parliamentarians.sparql',
+  senator: 'senators.sparql',
+  military: 'presidents.sparql',
+  business: 'politicians.sparql',
 };
 
-// Charge la liste des pays d'Afrique (Q-IDs)
+// Récupérer les Q-IDs des 50+ pays africains
 function getAfricanCountryQids() {
   try {
     const filePath = path.join(process.cwd(), 'data', COUNTRIES_FILE);
@@ -32,35 +32,24 @@ function getAfricanCountryQids() {
   return ['wd:Q1009', 'wd:Q1028', 'wd:Q1033', 'wd:Q1044', 'wd:Q258', 'wd:Q948', 'wd:Q954', 'wd:Q1019'];
 }
 
-// Requête SPARQL directe sur Wikidata si besoin
-async function fetchQidsFromWikidata(types) {
-  const countryQids = getAfricanCountryQids().join(' ');
-  const p39Qids = ['wd:Q30461', 'wd:Q18810062', 'wd:Q48352', 'wd:Q1006876', 'wd:Q83307', 'wd:Q1074044', 'wd:Q1541400', 'wd:Q82955'];
+// Exécuter une requête SPARQL réelle du dossier sparql/
+async function executeSparqlForType(type, countryQidsFormatted) {
+  const fileName = TYPE_TO_SPARQL_FILE[type] || 'presidents.sparql';
+  const filePath = path.join(process.cwd(), SPARQL_DIR, fileName);
 
-  const sparql = `
-  SELECT DISTINCT ?person WHERE {
-    VALUES ?country { ${countryQids} }
-    
-    # 1. Chefs d'État actuels (P35) ou chefs de gouvernement (P6)
-    { ?country wdt:P35 ?person . }
-    UNION
-    { ?country wdt:P6 ?person . }
-    UNION
-    # 2. Rôles et fonctions politiques principales des citoyens d'Afrique
-    {
-      ?person wdt:P27 ?country .
-      ?person wdt:P39 ?office .
-      VALUES ?office { ${p39Qids.join(' ')} }
-    }
-    FILTER NOT EXISTS { ?person wdt:P570 [] }
-  }
-  `;
+  if (!fs.existsSync(filePath)) return [];
+
+  let rawQuery = fs.readFileSync(filePath, 'utf-8');
+  const query = rawQuery.replace(/\{\{COUNTRIES\}\}/g, countryQidsFormatted);
 
   try {
-    const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(sparql)}&format=json`;
+    const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(query)}&format=json`;
     const res = await axios.get(url, {
-      headers: { 'User-Agent': 'PolitiliBot/2.0', 'Accept': 'application/sparql-results+json' },
-      timeout: 25000,
+      headers: {
+        'User-Agent': 'PolitiliBot/2.0 (politili.com)',
+        'Accept': 'application/sparql-results+json',
+      },
+      timeout: 30000,
     });
     const bindings = res.data?.results?.bindings || [];
     return bindings.map(b => b.person?.value?.split('/').pop()?.toUpperCase()).filter(Boolean);
@@ -88,35 +77,16 @@ export default async function handler(req, res) {
   } = req.body || {};
 
   try {
-    // 1. Lire data/politician_ids.json s'il existe
-    let candidateQids = new Set();
-    const idsPath = path.join(process.cwd(), 'data', IDS_FILE);
+    const countryQidsFormatted = getAfricanCountryQids().join(' ');
+    const collectedQidsSet = new Set();
 
-    if (fs.existsSync(idsPath)) {
-      try {
-        const rawIdsData = JSON.parse(fs.readFileSync(idsPath, 'utf-8'));
-        if (typeof rawIdsData === 'object' && !Array.isArray(rawIdsData)) {
-          for (const userType of types) {
-            const mappedKeys = TYPE_MAPPING[userType] || [userType];
-            for (const key of mappedKeys) {
-              if (rawIdsData[key] && Array.isArray(rawIdsData[key])) {
-                rawIdsData[key].forEach(id => candidateQids.add(id.toUpperCase()));
-              }
-            }
-          }
-        } else if (Array.isArray(rawIdsData)) {
-          rawIdsData.forEach(id => candidateQids.add(id.toUpperCase()));
-        }
-      } catch (e) {}
+    // 1. Exécuter les requêtes SPARQL réelles pour chaque type sélectionné
+    for (const type of types) {
+      const qids = await executeSparqlForType(type, countryQidsFormatted);
+      qids.forEach(qid => collectedQidsSet.add(qid));
     }
 
-    // Si la liste locale est vide, exécuter le scan Wikidata SPARQL
-    if (candidateQids.size === 0) {
-      const liveQids = await fetchQidsFromWikidata(types);
-      liveQids.forEach(id => candidateQids.add(id.toUpperCase()));
-    }
-
-    const allCandidateQids = Array.from(candidateQids);
+    const allCandidateQids = Array.from(collectedQidsSet);
 
     // 2. Charger les dirigeants existants dans africa_leaders.json
     const existingLeaders = dbRead(KEY, FILE) || [];
@@ -132,7 +102,7 @@ export default async function handler(req, res) {
         total_found: allCandidateQids.length,
         already_imported: existingLeaders.length,
         to_import: qidsToImport.length,
-        message: `Scan terminé : ${qidsToImport.length} nouveaux dirigeants disponibles sur un total de ${allCandidateQids.length} identifiés.`,
+        message: `Scan SPARQL Wikidata réussi : ${qidsToImport.length} nouveaux dirigeants disponibles sur un total de ${allCandidateQids.length} identifiés.`,
       });
     }
 
