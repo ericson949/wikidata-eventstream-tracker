@@ -1,82 +1,42 @@
-import type { IncomingMessage, ServerResponse } from 'http';
 import { dbRead } from './_db.js';
-
-type ApiReq = IncomingMessage & { query: Record<string, string> };
-type ApiRes = ServerResponse & { status: (c: number) => ApiRes; json: (d: unknown) => void; end: () => void };
-
-interface Vote {
-  politician_id: string;
-  vote_type: string;
-  value: string;
-}
-
-interface Leader {
-  id: string;
-  fullname?: string;
-  label?: string;
-  first_name?: string;
-  last_name?: string;
-  job_title?: string;
-  biography?: string;
-  description?: string;
-  birth_date?: string | null;
-  death_date?: string | null;
-  actor_state?: string;
-  country?: { id: string | null; name: string };
-  political_party?: { id: string | null; name: string };
-  position_held?: unknown;
-  photo_url?: string | null;
-  source_url?: string;
-  wikidata_url?: string;
-  enrichedAt?: string | null;
-  status?: string;
-  vote_enabled?: boolean;
-  block1_enabled?: boolean;
-  block2_enabled?: boolean;
-}
 
 const LEADERS_KEY = 'africa_leaders';
 const LEADERS_FILE = 'africa_leaders.json';
 const VOTES_KEY = 'votes';
 const VOTES_FILE = 'votes.json';
 
-function getRealVoteStats(votes: Vote[], politician_id: string) {
-  const opinion = votes.filter((v) => v.politician_id === politician_id && v.vote_type === 'opinion');
+function getRealVoteStats(votes, politician_id) {
+  const opinion = votes.filter(v => v.politician_id === politician_id && v.vote_type === 'opinion');
   return {
-    hearts:   opinion.filter((v) => v.value === 'hearts').length,
-    likes:    opinion.filter((v) => v.value === 'likes').length,
-    dislikes: opinion.filter((v) => v.value === 'dislikes').length,
-    horrors:  opinion.filter((v) => v.value === 'horrors').length,
+    hearts:   opinion.filter(v => v.value === 'hearts').length,
+    likes:    opinion.filter(v => v.value === 'likes').length,
+    dislikes: opinion.filter(v => v.value === 'dislikes').length,
+    horrors:  opinion.filter(v => v.value === 'horrors').length,
   };
 }
 
-export default async function handler(req: ApiReq, res: ApiRes): Promise<void> {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-token');
 
-  if (req.method === 'OPTIONS') { res.status(200).end(); return; }
-
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') {
-    res.status(405).json({ success: false, message: 'Méthode non autorisée.' });
-    return;
+    return res.status(405).json({ success: false, message: 'Méthode non autorisée.' });
   }
 
   try {
     const [items, votes] = await Promise.all([
-      dbRead<Leader[]>(LEADERS_KEY, LEADERS_FILE),
-      dbRead<Vote[]>(VOTES_KEY, VOTES_FILE),
+      dbRead(LEADERS_KEY, LEADERS_FILE),
+      dbRead(VOTES_KEY, VOTES_FILE),
     ]);
 
-    let list: Leader[] = items || [];
+    let list = items || [];
     const isAdmin = req.query.admin === 'true';
-    if (!isAdmin) {
-      list = list.filter((i) => i.status !== 'Désactivé');
-    }
+    if (!isAdmin) list = list.filter(i => i.status !== 'Désactivé');
 
-    const votesList: Vote[] = votes || [];
-
-    const results = list.map((item) => ({
+    const votesList = votes || [];
+    const results = list.map(item => ({
       id:               item.id,
       fullname:         item.fullname || item.label || item.id,
       first_name:       item.first_name || (item.fullname || item.label || '').split(' ')[0],
@@ -112,8 +72,8 @@ export default async function handler(req: ApiReq, res: ApiRes): Promise<void> {
       results.sort((a, b) => a.fullname.localeCompare(b.fullname, 'fr', { sensitivity: 'base' }));
     }
 
-    res.status(200).json({ success: true, data: results });
+    return res.status(200).json({ success: true, data: results });
   } catch (err) {
-    res.status(500).json({ success: false, message: (err as Error).message });
+    return res.status(500).json({ success: false, message: err.message });
   }
 }
