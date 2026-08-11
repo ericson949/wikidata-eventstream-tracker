@@ -7,31 +7,29 @@ const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST
 
 const isKvAvailable = Boolean(KV_URL && KV_TOKEN);
 
-async function kvFetch(command, ...args) {
+async function kvFetch(command: string, ...args: unknown[]): Promise<unknown> {
   if (!isKvAvailable) return null;
   try {
-    // Upstash / Vercel KV REST API format: /command/arg1/arg2...
-    // Or POST with body [command, ...args]
-    const url = `${KV_URL.replace(/\/$/, '')}`;
-    const res = await fetch(url, {
+    // Upstash / Vercel KV REST API format: POST with body [command, ...args]
+    const res = await fetch(KV_URL!.replace(/\/$/, ''), {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${KV_TOKEN}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify([command, ...args])
+      body: JSON.stringify([command, ...args]),
     });
-    const data = await res.json();
+    const data = (await res.json()) as { result: unknown };
     return data.result;
   } catch (e) {
-    console.warn(`[KV] Error executing ${command}:`, e.message);
+    console.warn(`[KV] Error executing ${command}:`, (e as Error).message);
     return null;
   }
 }
 
 // ─── Data Access Layer (KV in production, local JSON in dev) ────────────────
 
-export async function dbRead(key, fallbackFile) {
+export async function dbRead<T = unknown>(key: string, fallbackFile: string): Promise<T | null> {
   const filePath = path.join(process.cwd(), 'data', fallbackFile);
 
   // 1. Try Vercel KV if configured
@@ -39,9 +37,9 @@ export async function dbRead(key, fallbackFile) {
     const rawKv = await kvFetch('GET', key);
     if (rawKv !== null && rawKv !== undefined) {
       try {
-        return typeof rawKv === 'string' ? JSON.parse(rawKv) : rawKv;
+        return (typeof rawKv === 'string' ? JSON.parse(rawKv) : rawKv) as T;
       } catch (e) {
-        return rawKv;
+        return rawKv as T;
       }
     }
 
@@ -49,7 +47,7 @@ export async function dbRead(key, fallbackFile) {
     try {
       if (fs.existsSync(filePath)) {
         const fileContent = fs.readFileSync(filePath, 'utf-8');
-        const parsed = JSON.parse(fileContent);
+        const parsed = JSON.parse(fileContent) as T;
         await kvFetch('SET', key, JSON.stringify(parsed));
         console.log(`[KV] Auto-seeded key '${key}' from local file ${fallbackFile}`);
         return parsed;
@@ -61,14 +59,14 @@ export async function dbRead(key, fallbackFile) {
   try {
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, 'utf-8');
-      return JSON.parse(raw);
+      return JSON.parse(raw) as T;
     }
   } catch (e) {}
 
-  return [];
+  return null;
 }
 
-export async function dbWrite(key, data, fallbackFile) {
+export async function dbWrite(key: string, data: unknown, fallbackFile: string): Promise<boolean> {
   const filePath = path.join(process.cwd(), 'data', fallbackFile);
   let kvSaved = false;
 
