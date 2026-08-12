@@ -108,8 +108,17 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
     : `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(labelEn)}`;
   const wikipediaUrl = frWikiTitle ? wikipediaFr : (enWikiTitle ? wikipediaEn : wikipediaFr);
 
-  // Vérification stricte P35 (Head of State) si fourni dans options
-  const isHeadOfStateP35 = options?.activeHeadsSet ? options.activeHeadsSet.has(qid.toUpperCase()) : false;
+  // Vérification stricte P35 (Head of State) si fourni dans options ou via data/active_presidents.json
+  let activeSet = options?.activeHeadsSet;
+  if (!activeSet) {
+    try {
+      const filePath = path.join(process.cwd(), 'data', 'active_presidents.json');
+      if (fs.existsSync(filePath)) {
+        activeSet = new Set(JSON.parse(fs.readFileSync(filePath, 'utf-8')).map(id => id.toUpperCase()));
+      }
+    } catch (e) {}
+  }
+  const isHeadOfStateP35 = activeSet ? activeSet.has(qid.toUpperCase()) : isCurrentlyActive;
   const computedState = deathStr ? 'Décédé' : (isHeadOfStateP35 ? 'En exercice' : 'Ancien');
 
   return {
@@ -221,21 +230,42 @@ export default async function handler(req, res) {
 
     // ── Option C: Recalcul strict des Présidents en exercice (Chefs d'État P35 actuels) ──
     if (req.body?.fix_actor_states) {
-      const activeHeadsSet = new Set();
+      let activeHeadsSet = new Set();
+
+      // 1. Essayer de charger data/active_presidents.json
       try {
-        const countriesList = await readCountries();
-        const countryQids = countriesList.map(c => `wd:${c.id}`).join(' ');
-        const query = `SELECT DISTINCT ?person WHERE { VALUES ?country { ${countryQids} } ?country wdt:P35 ?person . FILTER NOT EXISTS { ?person wdt:P570 [] } }`;
-        const resSparql = await axios.get(`https://query.wikidata.org/sparql?query=${encodeURIComponent(query)}&format=json`, {
-          headers: { 'User-Agent': 'PolitiliBot/2.0', 'Accept': 'application/sparql-results+json' },
-          timeout: 25000,
-        });
-        const bindings = resSparql.data?.results?.bindings || [];
-        bindings.forEach(b => {
-          const qid = b.person?.value?.split('/').pop();
-          if (qid) activeHeadsSet.add(qid.toUpperCase());
-        });
+        const filePath = path.join(process.cwd(), 'data', 'active_presidents.json');
+        if (fs.existsSync(filePath)) {
+          const list = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+          list.forEach(id => activeHeadsSet.add(id.toUpperCase()));
+        }
       } catch (e) {}
+
+      // 2. Si le fichier statique n'a rien renvoyé, interroger Wikidata SPARQL
+      if (activeHeadsSet.size === 0) {
+        try {
+          const countriesList = await readCountries();
+          const countryQids = countriesList.map(c => `wd:${c.id}`).join(' ');
+          const query = `SELECT DISTINCT ?person WHERE { VALUES ?country { ${countryQids} } ?country wdt:P35 ?person . FILTER NOT EXISTS { ?person wdt:P570 [] } }`;
+          const resSparql = await axios.get(`https://query.wikidata.org/sparql?query=${encodeURIComponent(query)}&format=json`, {
+            headers: { 'User-Agent': 'PolitiliBot/2.0', 'Accept': 'application/sparql-results+json' },
+            timeout: 25000,
+          });
+          const bindings = resSparql.data?.results?.bindings || [];
+          bindings.forEach(b => {
+            const qid = b.person?.value?.split('/').pop();
+            if (qid) activeHeadsSet.add(qid.toUpperCase());
+          });
+        } catch (e) {}
+      }
+
+      // Si SPARQL et le fichier statique ont échoué, sécurité pour ne pas tout effacer
+      if (activeHeadsSet.size === 0) {
+        return res.status(500).json({
+          success: false,
+          message: "Impossible de récupérer la liste des Chefs d'État actuels depuis Wikidata. Réessayez."
+        });
+      }
 
       let activeCount = 0, formerCount = 0;
       leaders.forEach(l => {

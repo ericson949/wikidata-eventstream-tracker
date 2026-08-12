@@ -55,6 +55,10 @@ async function main() {
     process.exit(1);
   }
 
+  // Sauvegarder la liste statique pour Vercel
+  const activeArray = Array.from(activePresidentsSet);
+  fs.writeFileSync('./data/active_presidents.json', JSON.stringify(activeArray, null, 2), 'utf-8');
+
   // Mettre à jour africa_leaders.json
   const leaders = JSON.parse(fs.readFileSync(LEADERS_FILE, 'utf-8'));
   let countActive = 0;
