@@ -65,6 +65,26 @@ export function useAdminData() {
     }
   };
 
+  const handleActivateAll = async (targetIds?: string[]) => {
+    try {
+      const payload = targetIds && targetIds.length > 0 ? { activate_ids: targetIds } : { activate_all: true };
+      const res = await axios.put('/api/tracked', payload);
+      if (res.data.success) {
+        showToast(res.data.message || '✓ Profils activés avec succès !');
+        if (targetIds && targetIds.length > 0) {
+          const setQids = new Set(targetIds.map(id => id.toUpperCase()));
+          setPoliticians(prev => prev.map(p => setQids.has(p.id.toUpperCase()) ? { ...p, status: 'Activé' } : p));
+        } else {
+          setPoliticians(prev => prev.map(p => ({ ...p, status: 'Activé' })));
+        }
+      } else {
+        showToast('Erreur lors de l\'activation des profils.');
+      }
+    } catch (e) {
+      showToast('Erreur réseau.');
+    }
+  };
+
   return {
     politicians,
     countries,
@@ -77,5 +97,6 @@ export function useAdminData() {
     loadData,
     handleToggleStatus,
     handleDeletePolitician,
+    handleActivateAll,
   };
 }

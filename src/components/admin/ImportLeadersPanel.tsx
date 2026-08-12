@@ -32,7 +32,7 @@ export default function ImportLeadersPanel({ onImportDone }: { onImportDone: () 
   const [isOpen,          setIsOpen]          = useState(false);
   const [includeDeceased, setIncludeDeceased] = useState(false);
   const [includeFormer,   setIncludeFormer]   = useState(false);
-  const [defaultStatus,   setDefaultStatus]   = useState<'Désactivé' | 'Activé'>('Désactivé');
+  const [defaultStatus,   setDefaultStatus]   = useState<'Désactivé' | 'Activé'>('Activé');
   const [types,           setTypes]           = useState<string[]>(ALL_CATEGORY_OPTIONS.map(o => o.value));
   const [loading,         setLoading]         = useState(false);
   const [phase,           setPhase]           = useState<'idle' | 'scanning' | 'importing' | 'auto' | 'done' | 'error'>('idle');

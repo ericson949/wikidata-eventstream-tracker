@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, X, Trash2, ExternalLink, RefreshCw, Vote } from 'lucide-react';
+import { Search, X, Trash2, ExternalLink, RefreshCw, Vote, CheckCircle2 } from 'lucide-react';
 import InputSelect from '@/components/ui/InputSelect';
 import { Politician, Country } from '@/types';
 import ImportLeadersPanel from './ImportLeadersPanel';
@@ -18,6 +18,7 @@ interface PoliticiansTabProps {
   onToggleStatus: (id: string, newStatus: string) => void;
   onDeletePolitician: (id: string) => void;
   onRefreshData: () => void;
+  onActivateAll?: (ids?: string[]) => void;
 }
 
 export default function PoliticiansTab({
@@ -25,7 +26,8 @@ export default function PoliticiansTab({
   countries,
   onToggleStatus,
   onDeletePolitician,
-  onRefreshData
+  onRefreshData,
+  onActivateAll
 }: PoliticiansTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -85,8 +87,23 @@ export default function PoliticiansTab({
 
         <Card className="border-red-200 bg-red-50/40">
           <CardContent className="p-5">
-            <div className="text-3xl font-extrabold text-red-600">{disabledCount}</div>
-            <div className="mt-1 text-xs font-medium text-red-700">Profils Masqués</div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-3xl font-extrabold text-red-600">{disabledCount}</div>
+                <div className="mt-1 text-xs font-medium text-red-700">Profils Masqués</div>
+              </div>
+              {disabledCount > 0 && onActivateAll && (
+                <Button
+                  size="sm"
+                  onClick={() => onActivateAll()}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-3 py-1.5 shadow-sm"
+                  title="Publier immédiatement tous les profils désactivés"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                  Tout Activer ({disabledCount})
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -148,6 +165,20 @@ export default function PoliticiansTab({
             placeholder="Tous les statuts"
             className="w-full sm:w-44"
           />
+
+          {disabledCount > 0 && onActivateAll && (
+            <Button
+              size="sm"
+              onClick={() => {
+                const disabledIds = filteredPoliticians.filter(p => p.status === 'Désactivé').map(p => p.id);
+                onActivateAll(disabledIds.length > 0 ? disabledIds : undefined);
+              }}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 shrink-0"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+              Tout Activer
+            </Button>
+          )}
 
           <Button variant="ghost" size="sm" onClick={onRefreshData} title="Actualiser la liste" className="sm:w-auto self-end sm:self-auto hidden sm:flex">
             <RefreshCw className="h-4 w-4 text-slate-500" />

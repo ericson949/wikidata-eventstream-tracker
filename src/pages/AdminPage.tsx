@@ -23,6 +23,7 @@ export default function AdminPage() {
     loadData,
     handleToggleStatus,
     handleDeletePolitician,
+    handleActivateAll,
   } = useAdminData();
 
   return (
@@ -77,6 +78,7 @@ export default function AdminPage() {
               onToggleStatus={handleToggleStatus}
               onDeletePolitician={handleDeletePolitician}
               onRefreshData={loadData}
+              onActivateAll={handleActivateAll}
             />
           </TabsContent>
 

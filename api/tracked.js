@@ -185,9 +185,38 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'PUT') {
-    const cleanId = (idParam || req.body?.entityId || '').toUpperCase().trim();
-    const { status, vote_enabled, block1_enabled, block2_enabled, refresh_wikidata } = req.body || {};
+    const { activate_all, activate_ids, status, vote_enabled, block1_enabled, block2_enabled, refresh_wikidata } = req.body || {};
     const leaders = await readLeaders();
+
+    // ── Option A: Activation globale de tous les profils ──
+    if (activate_all) {
+      let updatedCount = 0;
+      leaders.forEach(l => {
+        if (l.status !== 'Activé') {
+          l.status = 'Activé';
+          updatedCount++;
+        }
+      });
+      await saveLeaders(leaders);
+      return res.status(200).json({ success: true, count: updatedCount, message: `✓ ${updatedCount} politicien(s) activé(s) avec succès !` });
+    }
+
+    // ── Option B: Activation d'une liste spécifique de Q-IDs ──
+    if (Array.isArray(activate_ids) && activate_ids.length > 0) {
+      const qidSet = new Set(activate_ids.map(id => id.toUpperCase().trim()));
+      let updatedCount = 0;
+      leaders.forEach(l => {
+        if (qidSet.has((l.id || '').toUpperCase())) {
+          l.status = 'Activé';
+          updatedCount++;
+        }
+      });
+      await saveLeaders(leaders);
+      return res.status(200).json({ success: true, count: updatedCount, message: `✓ ${updatedCount} politicien(s) activé(s) avec succès !` });
+    }
+
+    // ── Option C: Modification d'une fiche spécifique par ID ──
+    const cleanId = (idParam || req.body?.entityId || '').toUpperCase().trim();
     const item = leaders.find(l => l.id.toUpperCase() === cleanId);
     if (!item) return res.status(404).json({ success: false, message: `Entité ${cleanId} non trouvée.` });
 
