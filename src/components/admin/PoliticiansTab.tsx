@@ -180,6 +180,24 @@ export default function PoliticiansTab({
             </Button>
           )}
 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              if (!window.confirm("Voulez-vous recalculer strictement les Présidents en exercice (1 chef d'État officiel par pays) ?")) return;
+              try {
+                const res = await axios.put('/api/tracked', { fix_actor_states: true });
+                if (res.data.success) {
+                  onRefreshData();
+                }
+              } catch (e) {}
+            }}
+            title="Recalculer les Chefs d'État actuels (1 par pays)"
+            className="border-blue-300 bg-blue-50 text-blue-900 hover:bg-blue-100 text-xs font-semibold shrink-0"
+          >
+            🎯 Recalculer 1 Prés./pays
+          </Button>
+
           <Button variant="ghost" size="sm" onClick={onRefreshData} title="Actualiser la liste" className="sm:w-auto self-end sm:self-auto hidden sm:flex">
             <RefreshCw className="h-4 w-4 text-slate-500" />
           </Button>

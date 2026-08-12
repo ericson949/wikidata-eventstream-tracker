@@ -108,6 +108,10 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
     : `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(labelEn)}`;
   const wikipediaUrl = frWikiTitle ? wikipediaFr : (enWikiTitle ? wikipediaEn : wikipediaFr);
 
+  // Vérification stricte P35 (Head of State) si fourni dans options
+  const isHeadOfStateP35 = options?.activeHeadsSet ? options.activeHeadsSet.has(qid.toUpperCase()) : false;
+  const computedState = deathStr ? 'Décédé' : (isHeadOfStateP35 ? 'En exercice' : 'Ancien');
+
   return {
     fullname: labelFr, label: labelFr,
     first_name: labelFr.split(' ')[0] || labelFr,
@@ -118,7 +122,7 @@ export async function fetchAndEnrichFromWikidata(qid, countriesMap) {
       en: { label: labelEn, description: descEn, wikipedia: wikipediaEn },
     },
     birth_date: birthStr, death_date: deathStr,
-    actor_state: deathStr ? 'Décédé' : (isCurrentlyActive ? 'En exercice' : 'Ancien'),
+    actor_state: computedState,
     latest_end_year: latestEndTimeYear,
     is_older_than_20_years: isOlderThan20Years,
     country:         { id: countryQid, name: countryName, name_en: countryNameEn },
@@ -213,6 +217,46 @@ export default async function handler(req, res) {
       });
       await saveLeaders(leaders);
       return res.status(200).json({ success: true, count: updatedCount, message: `✓ ${updatedCount} politicien(s) activé(s) avec succès !` });
+    }
+
+    // ── Option C: Recalcul strict des Présidents en exercice (Chefs d'État P35 actuels) ──
+    if (req.body?.fix_actor_states) {
+      const activeHeadsSet = new Set();
+      try {
+        const countriesList = await readCountries();
+        const countryQids = countriesList.map(c => `wd:${c.id}`).join(' ');
+        const query = `SELECT DISTINCT ?person WHERE { VALUES ?country { ${countryQids} } ?country wdt:P35 ?person . FILTER NOT EXISTS { ?person wdt:P570 [] } }`;
+        const resSparql = await axios.get(`https://query.wikidata.org/sparql?query=${encodeURIComponent(query)}&format=json`, {
+          headers: { 'User-Agent': 'PolitiliBot/2.0', 'Accept': 'application/sparql-results+json' },
+          timeout: 25000,
+        });
+        const bindings = resSparql.data?.results?.bindings || [];
+        bindings.forEach(b => {
+          const qid = b.person?.value?.split('/').pop();
+          if (qid) activeHeadsSet.add(qid.toUpperCase());
+        });
+      } catch (e) {}
+
+      let activeCount = 0, formerCount = 0;
+      leaders.forEach(l => {
+        const qid = (l.id || '').toUpperCase();
+        if (l.death_date) {
+          l.actor_state = 'Décédé';
+        } else if (activeHeadsSet.has(qid)) {
+          l.actor_state = 'En exercice';
+          activeCount++;
+        } else {
+          l.actor_state = 'Ancien';
+          formerCount++;
+        }
+      });
+      await saveLeaders(leaders);
+      return res.status(200).json({
+        success: true,
+        activeCount,
+        formerCount,
+        message: `✓ Nettoyage réussi : ${activeCount} Présidents en exercice officiels et ${formerCount} Anciens.`
+      });
     }
 
     // ── Option C: Modification d'une fiche spécifique par ID ──
