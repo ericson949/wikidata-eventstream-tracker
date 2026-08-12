@@ -5,11 +5,23 @@ import PoliticianCard from '@/components/public/PoliticianCard';
 import PoliticianDetailModal from '@/components/public/PoliticianDetailModal';
 import InputSelect from '@/components/ui/InputSelect';
 import { Button } from '@/components/ui/button';
-import { Search, X } from 'lucide-react';
+import { Search, X, Sparkles, HelpCircle } from 'lucide-react';
 import { usePoliticiansData } from '@/hooks/usePoliticiansData';
+import axios from 'axios';
+import { Question } from '@/types';
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const [activeQuestion, setActiveQuestion] = React.useState<Question | null>(null);
+
+  React.useEffect(() => {
+    axios.get('/api/questions?active_only=true').then(res => {
+      if (res.data.success && res.data.data.length > 0) {
+        setActiveQuestion(res.data.data[0]);
+      }
+    }).catch(() => {});
+  }, []);
+
   const {
     loading,
     countries,
@@ -38,6 +50,32 @@ export default function HomePage() {
             Suivi officiel en temps réel des personnalités politiques d'Afrique de l'Ouest et Centrale connectées aux données de Wikidata.
           </p>
         </div>
+
+        {/* Banner Question du Moment / Sondage en cours */}
+        {activeQuestion && (
+          <div
+            onClick={() => navigate('/sondage')}
+            className="group relative cursor-pointer overflow-hidden rounded-2xl border border-amber-200 bg-amber-50/70 p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-amber-300 hover:bg-amber-50"
+          >
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1.5 min-w-0">
+                <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/15 px-3 py-1 text-xs font-extrabold text-amber-800">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                  QUESTION DU MOMENT (SONDAGE EN COURS)
+                </div>
+                <h3 className="font-serif text-lg sm:text-xl font-bold text-slate-900 group-hover:text-amber-900 transition-colors">
+                  « {activeQuestion.text} »
+                </h3>
+                <p className="text-xs text-slate-600">
+                  Participez au sondage national et exprimez votre avis pour chaque dirigeant.
+                </p>
+              </div>
+              <Button className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shrink-0 shadow">
+                Participer au sondage →
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Filter Toolbar */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
